@@ -7,3 +7,17 @@ tar xvfz <file>
 cd <dir>
 
 ./<file>
+
+[program:postgres_exporter]
+command=/opt/Exporter/postgres_exporter-0.14.0.linux-amd64/postgres_exporter --collector.postmaster
+autostart=True
+autorestart=True
+numprocs=1
+user=postgres
+environment=DATA_SOURCE_NAME='postgresql://postgres:postgres@192.168.1.30:5432/?sslmode=disable'
+
+[program:node_exporter]
+command=/opt/Exporter/node_exporter-1.6.1.linux-amd64/node_exporter
+autostart=True
+autorestart=True
+numprocs=1
