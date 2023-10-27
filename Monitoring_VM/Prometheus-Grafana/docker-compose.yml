@@ -13,14 +13,25 @@ services:
       - monitoring-net
     restart: unless-stopped
 
-  influx:
+  influxdb2:
     image: influxdb:latest
     container_name: influxdb2
     ports:
       - "8086:8086"
     volumes:
-      - ./config/influx_config.yml:/etc/influxdb2/config.yml:ro
+      - ./config/influx_config.yml:/etc/influxdb2/config.yml
       - influx-data:/var/lib/influxdb2
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    depends_on:
+      - influxdb2
+    volumes:
+      - ./config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     networks:
       - monitoring-net
     restart: unless-stopped

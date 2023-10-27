@@ -5,7 +5,7 @@ scrape_configs:
   - job_name: 'host-prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['192.168.1.126:9090']
         labels:
             instance: 'prometheus-server'
     
@@ -40,3 +40,13 @@ scrape_configs:
     - targets: ['192.168.1.31:9187']
       labels:
         instance: 'TARGET'
+
+# remote_write:
+#   - url: "http://influxdb2:8086/api/v2/write?org=IGLabs&bucket=base_store&precision=s"
+#     remote_timeout: 30s
+#     basic_auth:
+#       username: "ivan"
+#       password: "Tuc-ILnwPkPjN5ksZ-QcX_q9URzN6rR-xXB2m7Kjy4Vs3PtqPp1UhsEZurycg-3GXs5iJx1Bc7NrzFL_bJhS5A=="
+
+remote_write:
+  - url: "http://telegraf:1234/receive"
