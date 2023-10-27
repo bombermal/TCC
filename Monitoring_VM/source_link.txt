@@ -3,7 +3,7 @@ Exporters
 wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
 wget https://github.com/prometheus-community/postgres_exporter/releases/download/v0.14.0/postgres_exporter-0.14.0.linux-amd64.tar.gz
 
-tar xvfz <file>
+tar xvf <file>
 cd <dir>
 
 ./<file>
@@ -21,3 +21,5 @@ command=/opt/Exporter/node_exporter-1.6.1.linux-amd64/node_exporter
 autostart=True
 autorestart=True
 numprocs=1
+
+docker stress = progrium/stress --cpu 2 --io 1 --vm 2 --vm-bytes 1024M --timeout 5m
