@@ -6,13 +6,25 @@ services:
     container_name: prometheus
     ports:
       - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
     volumes:
       - ./config/prometheus_${ENV}.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
+    networks:
+      - monitoring-net
     restart: unless-stopped
-    
+
+  influx:
+    image: influxdb:latest
+    container_name: influxdb2
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./config/influx_config.yml:/etc/influxdb2/config.yml:ro
+      - influx-data:/var/lib/influxdb2
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -20,6 +32,8 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring-net
     restart: unless-stopped
 
 volumes:
@@ -27,3 +41,10 @@ volumes:
     driver: local
   prometheus-data:
     driver: local
+  influx-data:
+    driver: local
+
+networks:
+  monitoring-net:
+    name: monitoring-net
+        

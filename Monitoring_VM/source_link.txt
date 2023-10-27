@@ -23,3 +23,25 @@ autorestart=True
 numprocs=1
 
 docker stress = progrium/stress --cpu 2 --io 1 --vm 2 --vm-bytes 1024M --timeout 5m
+
+ -?, --help         show this help statement
+     --version      show version statement
+ -v, --verbose      be verbose
+ -q, --quiet        be quiet
+ -n, --dry-run      show what would have been done
+ -t, --timeout N    timeout after N seconds
+     --backoff N    wait factor of N microseconds before work starts
+ -c, --cpu N        spawn N workers spinning on sqrt()
+ -i, --io N         spawn N workers spinning on sync()
+ -m, --vm N         spawn N workers spinning on malloc()/free()
+     --vm-bytes B   malloc B bytes per vm worker (default is 256MB)
+     --vm-stride B  touch a byte every B bytes (default is 4096)
+     --vm-hang N    sleep N secs before free (default is none, 0 is inf)
+     --vm-keep      redirty memory instead of freeing and reallocating
+ -d, --hdd N        spawn N workers spinning on write()/unlink()
+     --hdd-bytes B  write B bytes per hdd worker (default is 1GB)
+     --hdd-noclean  do not unlink files created by hdd workers
+
+
+
+influx token TRE = QbZ52qctpQG8T9T8bYG1QLm2ANHS_sH6Enh70jH4sxnOvcitL6YGiUnRLO-0ayy2g-cxuiCyWmkxPzmSmG10cg==

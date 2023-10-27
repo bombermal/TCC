@@ -32,3 +32,6 @@ scrape_configs:
     - targets: ['10.16.45.130:9187']
       labels:
         instance: 'TARGET'
+
+remote_write:
+  - url: "http://localhost:8086/api/v1/prom/write?db=prometheus&u=ivan&p=Ran22890"
