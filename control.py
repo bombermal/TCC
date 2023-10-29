@@ -155,7 +155,8 @@ def populate_db(
     print("Old path:", old_path)
     print("New path:", new_path)
     try:
-        shutil.move(old_path, new_path, )
+        shutil.rmtree(f'{new_path}/{output}')
+        shutil.move(old_path, new_path )
     except:
         print(f"Error while moving directory {output}. Old -> New Path")
 
