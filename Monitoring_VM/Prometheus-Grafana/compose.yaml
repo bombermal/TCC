@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus_${ENV}.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
+  influxdb2:
+    image: influxdb:latest
+    container_name: influxdb2
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./config/influx_config.yml:/etc/influxdb2/config.yml
+      - influx-data:/var/lib/influxdb2
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    depends_on:
+      - influxdb2
+    volumes:
+      - ./config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring-net
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  influx-data:
+    driver: local
+
+networks:
+  monitoring-net:
+    name: monitoring-net
+        
