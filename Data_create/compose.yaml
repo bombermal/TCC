@@ -1,16 +1,5 @@
 version: '3'
 
-# services:
-#   data_create:
-#     image: data_create
-#     container_name: data_create
-#     stdin_open: true 
-#     # tty: true 
-#     volumes:
-#       - ./Tools:/opt/Tools
-#     working_dir: /opt/Tools
-#     command: ${COMMAND}
-    
 services:
   data_create:
     image: primetoninc/jre:1.8
@@ -20,7 +9,3 @@ services:
       - ./Tools:/opt/Tools
     working_dir: /opt/Tools
     command: ["java", "-jar", "DIGen.jar", "-sf", "${QTY}", "-o", "${OUT}"]
-
-# volumes:
-#   data-create:
-#     driver: local

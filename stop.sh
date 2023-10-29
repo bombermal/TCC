@@ -1,2 +1,0 @@
-# Run the command "docker-compose up -d" for the file "docker-compose.yml" inside the path "Monitoring_VM\Prometheus-Grafana\"
-docker-compose -f "Monitoring_VM/Prometheus-Grafana/docker-compose.yml" down

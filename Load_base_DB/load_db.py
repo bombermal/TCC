@@ -6,10 +6,15 @@ import datetime
 from string import Template
 # import xml.etree.ElementTree as ET
 from typing_extensions import Annotated
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 
-# Default Variables
-default_source_path = 'D:/Ivan/OneDrive/Projetos/Códigos ( Profissional )/Material criado/TCC/Data_create/Tools/Files'
+# Default Variables 
+machine_ip = os.popen('hostname -I').read()
+if ('10.16' in machine_ip) | ('192.168' in machine_ip):
+    default_source_path = 'D:/Ivan/OneDrive/Projetos/Códigos ( Profissional )/Material criado/TCC/Load_base_DB/Synthetic_data'
+else:
+    default_source_path = '/opt/Synthetic_data'
+
 default_conn_params = {
     "drivername": "postgresql",
     "username": "postgres",
@@ -189,18 +194,10 @@ def finwire(
             lambda row: [ row[x:y].strip() for x, y in accum_index ])
         .tolist(), columns=fin_cols)
     
-    with engine.begin() as connection:
-        df_finwire_cmp.to_sql(name="Finwire_cmp", con=connection, schema=schema, if_exists="replace", index=False)
-
-    print(now(title='Finwire CMP', start_end='finished'))
-    with engine.begin() as connection:
-        df_finwire_sec.to_sql(name="Finwire_sec", con=connection, schema=schema, if_exists="replace", index=False)
-
-    print(now(title='Finwire SEC', start_end='finished'))
-    with engine.begin() as connection:
-        df_finwire_fin.to_sql(name="Finwire_fin", con=connection, schema=schema, if_exists="replace", index=False)
-
-    print(now(title='Finwire FIN', start_end='finished'))
+    # Write do DB
+    generic_write("Finwire_cmp", df_finwire_cmp, engine, schema)
+    generic_write("Finwire_sec", df_finwire_sec, engine, schema)
+    generic_write("Finwire_fin", df_finwire_fin, engine, schema)
    
 @app.command(help="Load HoldingHistory table.")
 def holding_hist(
@@ -423,8 +420,6 @@ def load_all(
     watchhistory(file_path=files_path, engine=engine, schema=schema)
     
     print(now(start_end="finished"))
-    
-    
     
 if __name__ == "__main__":
     app()
