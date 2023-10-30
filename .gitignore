@@ -7,7 +7,7 @@ Data_create/Tools/DIGen*
 # Airflow
 __pycache__
 logs
-*.jar
+# *.jar
 volumes
 extract
 
