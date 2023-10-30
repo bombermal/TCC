@@ -1,0 +1,1 @@
+(DAGS=$(docker-compose exec -T airflow-scheduler bash -c "grep -oP 'dag_id: \K(.+)' <(airflow dags list -o yaml -S /opt/airflow/dags/$1)"); for id in $DAGS; do docker-compose exec -T airflow-scheduler bash -c "airflow dags unpause $id & airflow dags trigger $id"; done;)

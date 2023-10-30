@@ -1,11 +1,20 @@
+# FILEPATH: /opt/bi/TCC/Data_create/compose.yaml
+
+# Docker Compose file for running the data_create service
 version: '3'
 
 services:
   data_create:
+    # Use the primetoninc/jre:1.8 image for the container
     image: primetoninc/jre:1.8
+    # Set the container name to data_create
     container_name: data_create
+    # Open stdin for the container
     stdin_open: true 
+    # Mount the Tools directory to /opt/Tools in the container
     volumes:
       - ./Tools:/opt/Tools
+    # Set the working directory to /opt/Tools
     working_dir: /opt/Tools
+    # Run the DIGen.jar file with the specified arguments
     command: ["java", "-jar", "DIGen.jar", "-sf", "${QTY}", "-o", "${OUT}"]

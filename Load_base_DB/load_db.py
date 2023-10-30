@@ -31,6 +31,16 @@ def now(
         title: Annotated[str, "Title of the task."] = "Source",
         start_end: Annotated[str, "Start or End of the task."] = "started"
         ):
+    """
+    Returns the current date and time as a formatted string.
+
+    Args:
+        title (str): Title of the task. Default is "Source".
+        start_end (str): Start or End of the task. Default is "started".
+
+    Returns:
+        str: A formatted string containing the current date and time.
+    """
     return f"{title} load {start_end}...{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
 @app.command(help="Create string used to define file locations")
@@ -38,18 +48,35 @@ def files_source(
                 source_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
                 batch_path: Annotated[str, "Batch directory path."] = "Batch1",
                 ):
+    """
+    Returns a string that defines the location of the files to be loaded based on the source path and batch path.
     
+    Args:
+        source_path (str): Path to the directory containing the files to be loaded.
+        batch_path (str): Batch directory path.
+    
+    Returns:
+         string that defines the location of the files to be loaded.
+    """
     return source_path + "/" + batch_path
 
 @app.command(help="Create connection object.")
 def create_connection(
                     params: Annotated[str, "Connection parameters."] = default_conn_params
                     ):
+    """
+    Create a connection object using the given connection parameters.
     
+    Args:
+        params (str): Connection parameters in the format of a string.
+        
+    Returns:
+        engine: A SQLAlchemy engine object representing the database connection.
+    """
     conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").substitute(params)
     engine = create_engine(conn_string, echo=False)
     
-    return engine  
+    return engine
 
 @app.command(help="Generic load Pandas Dataframe to Database.")
 def generic_write(
@@ -58,7 +85,18 @@ def generic_write(
         engine: Annotated[str, "Connection object."],
         schema: Annotated[str, "Schema name."],
         ):
-   
+    """
+    Write a dataframe to a SQL table.
+
+    Args:
+        title (str): Title of the task.
+        df_aux (pandas.DataFrame): Dataframe to be written to SQL.
+        engine (sqlalchemy.engine.base.Engine): Connection object.
+        schema (str): Schema name.
+
+    Returns:
+        None
+    """
     with engine.begin() as connection:
         df_aux.to_sql(name=title.lower(), con=connection, schema=schema, if_exists="replace", index=False)
 
@@ -66,10 +104,21 @@ def generic_write(
     
 @app.command(help="Load Cash Transation table.")
 def cash_trans(
-            file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
-            engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
-            schema: Annotated[str, "Schema name."] = "tpc"
-            ):
+        file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
+        engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
+        schema: Annotated[str, "Schema name."] = "tpc"
+        ):
+    """
+    Load Cash Transaction table from a text file to a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "CashTransaction"
     ext = "txt"
@@ -89,6 +138,17 @@ def daily_market(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):
+    """
+    This function loads the daily market data from a text file into a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "DailyMarket"
     ext = "txt"
@@ -107,6 +167,17 @@ def tb_date(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):
+    """
+    Load data from the Date file into the database.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "Date"
     ext = "txt"
@@ -123,10 +194,22 @@ def tb_date(
     
 @app.command(help="Load Finwire CMP, SEC e FIN table.")
 def finwire(
-            file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
-            engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
-            schema: Annotated[str, "Schema name."] = "tpc"
-            ):
+        file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
+        engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
+        schema: Annotated[str, "Schema name."] = "tpc"
+        ) -> None:
+    """
+    Loads Finwire CMP, SEC and FIN tables from a given directory into a database.
+
+    Args:
+        file_path: Path to the directory containing the files to be loaded.
+        engine: Connection object.
+        schema: Schema name.
+    Returns:
+        None
+    Raises:
+        None
+    """
     
     # Finwire - Find all files names and sort them
     fin_files = os.listdir(f"{file_path}")
@@ -204,7 +287,15 @@ def holding_hist(
             file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
-            ):   
+            ):
+    """
+    Load HoldingHistory data from a text file into a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "HoldingHistory"
     ext = "txt"
@@ -220,7 +311,15 @@ def hr(
             file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
-            ):   
+            ):
+    """
+    This function loads the HR data from a CSV file into a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "HR"
     ext = "csv"
@@ -237,6 +336,14 @@ def industry(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load Industry table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "Industry"
     ext = "txt"
@@ -253,6 +360,14 @@ def prospect(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load the Prospect table from a CSV file into a database.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "Prospect"
     ext = "csv"
@@ -270,7 +385,15 @@ def statustype(
             file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
-            ):   
+            ):
+    """
+    Loads the StatusType data from a text file into a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "StatusType"
     ext = "txt"
@@ -287,6 +410,14 @@ def taxrate(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load TaxRate table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "TaxRate"
     ext = "txt"
@@ -295,7 +426,7 @@ def taxrate(
     # Read file
     df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
     # Write do DB
-    generic_write(file_name, df_aux, engine, schema)    
+    generic_write(file_name, df_aux, engine, schema)
 
 @app.command(help="Load Time table.")    
 def time(
@@ -303,6 +434,14 @@ def time(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load Time table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "Time"
     ext = "txt"
@@ -312,7 +451,7 @@ def time(
     # Read file
     df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
     # Write do DB
-    generic_write(file_name, df_aux, engine, schema) 
+    generic_write(file_name, df_aux, engine, schema)
         
 @app.command(help="Load TradeHistory table.")    
 def tradehistory(
@@ -320,6 +459,14 @@ def tradehistory(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load TradeHistory table from a text file into a database table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "TradeHistory"
     ext = "txt"
@@ -328,7 +475,7 @@ def tradehistory(
     # Read file
     df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
     # Write do DB
-    generic_write(file_name, df_aux, engine, schema)  
+    generic_write(file_name, df_aux, engine, schema)
     
 @app.command(help="Load Trade table.")    
 def trade(
@@ -336,6 +483,14 @@ def trade(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load Trade table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "Trade"
     ext = "txt"
@@ -345,23 +500,32 @@ def trade(
     # Read file
     df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
     # Write do DB
-    generic_write(file_name, df_aux, engine, schema)  
+    generic_write(file_name, df_aux, engine, schema)
 
-@app.command(help="Load TradeType table.")    
+@app.command(help="Load TradeType table.")
 def tradetype(
-            file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
-            engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
-            schema: Annotated[str, "Schema name."] = "tpc"
-            ):   
+        file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path + "/Batch1",
+        engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
+        schema: Annotated[str, "Schema name."] = "tpc"
+        ):
+    """Loads TradeType table from a text file to a database.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "TradeType"
     ext = "txt"
     sep = '|'
     cols = ["TT_ID", "TT_NAME", "TT_IS_SELL", "TT_IS_MRKT"]
+
     # Read file
-    df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
-    # Write do DB
-    generic_write(file_name, df_aux, engine, schema)  
+    df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}", sep=sep, header=None, names=cols)
+
+    # Write to DB
+    generic_write(file_name, df_aux, engine, schema)
 
 @app.command(help="Load WatchHistory table.")    
 def watchhistory(
@@ -369,6 +533,14 @@ def watchhistory(
             engine: Annotated[str, "Connection object."] = create_connection(params=default_conn_params),
             schema: Annotated[str, "Schema name."] = "tpc"
             ):   
+    """
+    Load WatchHistory table.
+
+    Args:
+        file_path (str): Path to the directory containing the files to be loaded.
+        engine (str): Connection object.
+        schema (str): Schema name.
+    """
     # Variables
     file_name = "WatchHistory"
     ext = "txt"
@@ -377,7 +549,7 @@ def watchhistory(
     # Read file
     df_aux = pd.read_csv(f"{file_path}/{file_name}.{ext}",sep=sep, header=None, names=cols)
     # Write do DB
-    generic_write(file_name, df_aux, engine, schema)  
+    generic_write(file_name, df_aux, engine, schema)
               
 @app.command(help="Run all load functions.")
 def load_all(
@@ -391,6 +563,20 @@ def load_all(
         host: Annotated[str, "Host."] = default_conn_params["host"],
         port: Annotated[str, "Port."] = default_conn_params["port"]
         ):
+    """
+    Runs all load functions.
+    
+    Args:
+        source_path (str): Path to the directory containing the files to be loaded.
+        batch_path (str): Batch directory path.
+        database (str): Database name.
+        schema (str): Schema name.
+        drivername (str): Driver name.
+        username (str): Username.
+        password (str): Password.
+        host (str): Host.
+        port (str): Port.
+    """
     con_params = {
             "drivername": drivername,
             "username": username,

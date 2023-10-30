@@ -2,3 +2,12 @@ Data_create/Tools/pdgf
 Data_create/Tools/DIGen*
 */Synthetic_data/*
 *test*
+
+
+# Airflow
+__pycache__
+logs
+*.jar
+volumes
+extract
+

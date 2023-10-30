@@ -9,4 +9,4 @@ services:
     working_dir: /opt
     command: bash -c "
         pip install typer 
-        && python3 load_db.py load-all"
+        && python3 load_db.py load-all ${HOST_FLAG}"

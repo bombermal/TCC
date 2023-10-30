@@ -15,7 +15,10 @@ if OS_TYPE == 'nt':  # for Windows
 else:  # for Unix-based systems
     HOSTNAME = os.uname()[1]
     MACHINE_IP = os.popen('hostname -I').read()
+    
 ABS_PATH = "Ivan/OneDrive/Projetos/Códigos ( Profissional )/Material criado/TCC/"
+if HOSTNAME == "residenciabi-04":
+    ABS_PATH = "opt/bi/TCC/"
 
 print("OS_TYPE:", OS_TYPE)
 print("HOSTNAME:", HOSTNAME)
@@ -28,6 +31,16 @@ def start_stop_monitoring(
     condition: Annotated[str, "Can be 'start', 'stop' or 'restart'."] = "start",
     abs_path: Annotated[str, "Absolute path to monitoring folder."] = ABS_PATH
     ):
+    """
+    Starts, stops or restarts monitoring services using Docker Compose.
+
+    Args:
+        condition (str): Can be 'start', 'stop' or 'restart'. Default is 'start'.
+        abs_path (str): Absolute path to project folder. Default is ABS_PATH.
+
+    Returns:
+        None
+    """
     # Up monitoring services
     monitoring_path = abs_path + "Monitoring_VM/Prometheus-Grafana/"
     # Home or Work
@@ -95,6 +108,16 @@ def populate_db(
     sf: Annotated[int, "Scale fator for ammount of data created."] = 3,
     output: Annotated[str, "Output folder name."] = "Synthetic_data"
     ):
+    """
+    Populates the source database with synthetic data.
+
+    Args:
+        sf (int): Scale factor for amount of data created.
+        output (str): Output folder name.
+
+    Returns:
+        None
+    """
     data_create_path = ABS_PATH + "Data_create/"
     # Home or Work
     home_prefix = "/mnt/d/" if (HOSTNAME != "residenciabi-04") else "/"
@@ -150,15 +173,19 @@ def populate_db(
     
     # Move created data to the correct folder
     old_path = data_create_path + f'Tools/{output}/'
-    new_path = "D:/"+ ABS_PATH + f"Load_base_DB/" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB/"
+    new_path = "D:/"+ ABS_PATH + f"Load_base_DB/" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB"
     # Move directory
     print("Old path:", old_path)
     print("New path:", new_path)
     try:
-        shutil.rmtree(f'{new_path}/{output}')
+        try:
+            shutil.rmtree(f'{new_path}/{output}')
+        except Exception as e:
+            print(e)
+            pass
         shutil.move(old_path, new_path )
-    except:
-        print(f"Error while moving directory {output}. Old -> New Path")
+    except Exception as e:
+        print(f"Error while moving directory {output}. Old -> New Path\n{e}")
 
     compose_path = "D:/"+ ABS_PATH + f"Load_base_DB/" + "compose.yaml" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB/" + "compose.yaml"
     # Run python load_db.py container
@@ -197,7 +224,7 @@ def populate_db(
         count = (count + 1)% 10
         container.reload()
     
-    print(f"{container_name.capitalize()} finished.")  
+    print(f"{container_name.capitalize()} finished.")
     
 if __name__ == "__main__":
     app()
