@@ -1,5 +1,4 @@
-TPC-DI/*
-Data_create/jre-8u381-linux-x64.rpm
-Data_create/Tools/*
+Data_create/Tools/pdgf
+Data_create/Tools/DIGen*
 */Synthetic_data/*
 *test*
