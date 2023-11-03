@@ -1,10 +1,15 @@
 import os
 import time
+import json
 import typer
 import shutil
 import docker
 import socket
+import requests
 import subprocess
+import pandas as pd
+from string import Template
+from sqlalchemy import create_engine
 from typing_extensions import Annotated
 
 # get the machine name
@@ -23,6 +28,23 @@ if HOSTNAME == "residenciabi-04":
 print("OS_TYPE:", OS_TYPE)
 print("HOSTNAME:", HOSTNAME)
 print("MACHINE_IP:", MACHINE_IP)
+
+default_conn_params_source = {
+    "drivername": "postgresql",
+    "username": "postgres",
+    "password": "postgres",
+    "host": "192.168.1.30",
+    "port": "5432",
+    "database": "tpc"
+}
+default_conn_params_target = {
+    "drivername": "postgresql",
+    "username": "postgres",
+    "password": "postgres",
+    "host": "192.168.1.31",
+    "port": "5432",
+    "database": "tpc"
+}
 
 app = typer.Typer(help="Control test flow")
 
@@ -225,6 +247,195 @@ def populate_db(
         container.reload()
     
     print(f"{container_name.capitalize()} finished.")
+
+@app.command(help="Check Airbyte API status")
+def check_airbyte(
+    host: Annotated[str, "Airbyte host."] = "192.168.1.33",
+    port: Annotated[int, "Airbyte port."] = 8006,
+    user: Annotated[str, "Airbyte user."] = "admin",
+    password: Annotated[str, "Airbyte password."] = "12345"
+    ):
+    """
+    Checks the health of an Airbyte instance using the provided credentials.
+
+    Args:
+        host (str): Airbyte host.
+        port (int): Airbyte port.
+        user (str): Airbyte user.
+        password (str): Airbyte password.
+
+    Returns:
+        None
+    """
+    url = f'http://{host}:{port}/health'
     
+    # Request
+    response = requests.get(url, auth=(user, password))
+    print(f'Airbyte check:\n{response.text}\nCode:{response.status_code}')
+ 
+@app.command(help="Start Airbyte sync.")
+def sync_airbyte(
+    host: str = "192.168.1.33",
+    port: int = 8006,
+    user: str = "admin",
+    password: str = "12345",
+    return_dict: bool = False
+    ):
+    """
+    Force Reset and Syncs data from an Airbyte connection.
+
+    Args:
+        host (str): Airbyte host.
+        port (int): Airbyte port.
+        user (str): Airbyte user.
+        password (str): Airbyte password.
+        return_dict (bool): If True, returns a dictionary with throughput and other info.
+
+    Returns:
+        If return_dict is True, returns a dictionary with the following keys:
+            - jobId
+            - jobType
+            - startTime
+            - bytesSynced
+            - rowsSynced
+            - TimeDelta
+            - Throughput
+    """
+    root_url = f'http://{host}:{port}/'
+    
+    # Get ID
+    url = root_url +'v1/connections'
+    # Request
+    response = requests.get(url, auth=(user, password))
+    print(f'Response code:{response.status_code}\n')
+
+    conn_id = response.json()['data'][0]['connectionId']
+    print(f"Airbyte connection ID: {conn_id}")
+    
+    url = root_url + 'v1/jobs'
+
+    load = 'reset'
+    payload = {
+        "jobType": load,
+        "connectionId": conn_id
+        }
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json"
+        }
+    
+    # Reset job
+    print("Resetting Airbyte Job...")
+    response = requests.post(url, json=payload, headers=headers, auth=(user, password))
+    # Wait for reset finish
+    condition = True
+    while condition:
+        time.sleep(5)
+        # Request
+        response = requests.get(url, auth=(user, password))
+        jobs_list = response.json()['data']
+        condition = jobs_list[-1]['status'] != 'succeeded'
+        
+    # Sync job
+    payload['jobType'] = 'sync'
+    print("Sync Airbyte Job...")
+    response = requests.post(url, json=payload, headers=headers, auth=(user, password))
+    
+    condition = True
+    while condition:
+        time.sleep(5)
+        # Request
+        response = requests.get(url, auth=(user, password))
+        jobs_list = response.json()['data']
+        condition = jobs_list[-1]['status'] != 'succeeded'
+        
+    print("Airbyte sync finished.")
+      
+    if return_dict:
+        # Calculate througput
+        jobs_df = pd.DataFrame(jobs_list)
+        jobs_df.startTime = pd.to_datetime(jobs_df.startTime, format='ISO8601')
+        jobs_df.lastUpdatedAt = pd.to_datetime(jobs_df.lastUpdatedAt, format='ISO8601')
+        jobs_df['TimeDelta'] = jobs_df.lastUpdatedAt - jobs_df.startTime
+        jobs_df.TimeDelta = jobs_df.TimeDelta.dt.seconds
+        jobs_df['Throughput'] = round(jobs_df.rowsSynced / jobs_df.TimeDelta, 2)
+    
+        idx = jobs_df.index[-1]
+        columns = ["jobId", "jobType", "startTime", "bytesSynced", "rowsSynced", "TimeDelta", "Throughput"]
+        
+        return jobs_df.loc[idx,columns].to_dict()
+
+@app.command(help="Start benchmark.")
+def benchmark(
+    test_range: Annotated[int, "Number of tests to run."] = 1,
+    output: Annotated[str, "Output folder name."] = "Result_json"
+    ):
+    
+    dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
+    
+    sf_list = [3]
+    for _ in range(test_range):
+        sf_list.append(round(sf_list[-1] * 1.5))
+    sf_list.pop(-1)
+    
+    for id_num, tst in enumerate(sf_list):
+        # Populate DB
+        s_time = time.time()
+        populate_db(sf=tst)
+        e_time = time.time()
+        operation = 'populate_db'
+        
+        conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_source)
+        engine = create_engine(conn_string, echo=False)
+        
+        query = """SELECT
+            relname AS table_name,
+            n_live_tup AS row_count,
+            pg_total_relation_size(relid) AS total_size_bytes
+        FROM 
+            pg_stat_user_tables
+        WHERE 
+            schemaname = 'tpc'"""
+
+        df_aux = pd.read_sql(query, engine)
+        tables_names = df_aux.table_name.to_list()
+        rows_count = df_aux.row_count.to_list()
+        total_size_bytes = df_aux.total_size_bytes.to_list()
+        
+        dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
+        aux = {key: value for key, value in zip(dct_keys, dct_values)}
+        
+        # save json file as result.json append as newline
+        with open(f'{output}/populate_source.txt', 'a') as file:
+            json.dump(aux, file)
+            file.write('\n')
+            
+        # Reset Airbyte
+        result_dict = sync_airbyte(return_dict=True)
+        # Timestamp to string
+        result_dict['startTime'] = result_dict['startTime'].strftime("%Y-%m-%d %H:%M:%S")
+        result_dict['operation'] = 'sync_airbyte'
+        result_dict["benchmark_id"] = id_num
+        with open(f'{output}/airbyte_status.txt', 'a') as file:
+            json.dump(result_dict, file)
+            file.write('\n')
+        
+        conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_target)
+        engine = create_engine(conn_string, echo=False)
+        
+        df_aux = pd.read_sql(query, engine)
+        tables_names = df_aux.table_name.to_list()
+        rows_count = df_aux.row_count.to_list()
+        total_size_bytes = df_aux.total_size_bytes.to_list()
+        
+        operation = 'sync_airbyte'
+        dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
+        aux = {key: value for key, value in zip(dct_keys, dct_values)}
+        
+        # save json file as result.json append as newline
+        with open(f'{output}/populate_target.txt', 'a') as file:
+            json.dump(aux, file)
+            file.write('\n')
+        
 if __name__ == "__main__":
     app()

@@ -1,0 +1,1 @@
+{"jobId": 17, "jobType": "sync", "startTime": "2023-11-03 02:29:12", "bytesSynced": 571699785, "rowsSynced": 4525390, "TimeDelta": 186, "Throughput": 24330.05, "operation": "sync_airbyte", "benchmark_id": 0}
