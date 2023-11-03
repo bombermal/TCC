@@ -213,7 +213,7 @@ def populate_db(
     # Run python load_db.py container
     if OS_TYPE == "nt":
         # Run docker compose up command on windows    
-        command = ["docker-compose", "-f", compose_path, "up", "-d"]
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
         print("Compose path:", compose_path)  
         try:
             subprocess.run(command, check=True, shell=True)
@@ -221,7 +221,7 @@ def populate_db(
             print("An error occurred:", e)
     else:
         # Run docker compose up command on linux
-        command = ["docker-compose", "-f", compose_path, "up", "-d"]
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
         print("Compose path:", compose_path)  
         try:
             subprocess.run(command, check=True, shell=False)
@@ -373,11 +373,11 @@ def benchmark(
     
     dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
     
-    sf_list = [3]
+    sf_list = [31]
     for _ in range(test_range):
         sf_list.append(round(sf_list[-1] * 1.5))
     sf_list.pop(-1)
-    
+    print(f"\nBenchmark range: {sf_list}\n")
     for id_num, tst in enumerate(sf_list):
         # Populate DB
         s_time = time.time()

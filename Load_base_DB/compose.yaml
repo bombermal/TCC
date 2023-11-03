@@ -2,11 +2,12 @@ version: "3.7"
 
 services:
   populate_source:
-    image: pandas/pandas:pip-all
+    image: populate_image #pandas/pandas:pip-all
     container_name: populate_source
     volumes:
       - .:/opt
     working_dir: /opt
-    command: bash -c "
-        pip install typer 
-        && python3 load_db.py load-all ${HOST_FLAG}"
+    command: bash -c "python3 load_db.py load-all ${HOST_FLAG}"
+    # command: bash -c "
+    #     pip install typer 
+    #     && python3 load_db.py load-all ${HOST_FLAG}"
