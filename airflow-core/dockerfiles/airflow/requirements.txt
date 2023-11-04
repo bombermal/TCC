@@ -1,7 +1,0 @@
-SQLAlchemy
-apiclient
-apache-airflow-providers-apache-spark==4.0.1
-pyspark
-pandas
-jupyterlab
-papermill

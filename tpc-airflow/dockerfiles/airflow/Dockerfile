@@ -1,6 +1,6 @@
-FROM apache/airflow:latest-python3.10
+FROM apache/airflow:2.7.2-python3.11
 COPY requirements.txt /home
-
+# Upgrade pip
 RUN pip3 install --upgrade pip
 RUN pip3 install -r /home/requirements.txt
 
@@ -11,20 +11,17 @@ WORKDIR /opt/
 RUN apt-get update && apt-get install -y wget
 # install unzip
 RUN apt-get update && apt-get install -y unzip
-
-# Pentaho Data Integration https://sourceforge.net/projects/pentaho/files/latest/download
-#RUN wget https://sonik.dl.sourceforge.net/project/pentaho/Pentaho-9.3/client-tools/pdi-ce-9.3.0.0-428.zip -O pdi.zip
-# extract the zip file to the folder /opt/data-integration
-#RUN unzip pdi.zip -d /opt/
+# install nano 
+RUN apt-get update && apt-get install -y nano
 
 #tika
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29 && apt update -y && apt-get install -y software-properties-common && \
     apt-add-repository 'deb http://archive.debian.org/debian stretch main' && apt update -y && \
-    apt-get install -y openjdk-8-jdk-headless &&\
+    apt-get install -y openjdk-8-jdk &&\
     export JAVA_HOME &&\
     apt-get clean
 
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:$PATH
 
 #oracle
@@ -39,5 +36,6 @@ RUN        apt-get update && apt-get install -y libaio1 wget unzip \
             && ldconfig
 
 WORKDIR /opt/airflow
-COPY ./jars/*.jar /home/airflow/.local/lib/python3.9/site-packages/pyspark/jars/
 
+# Copiando os jars do spark para o airflow
+COPY ./jars/*.jar /home/airflow/.local/lib/python3.11/site-packages/pyspark/jars/

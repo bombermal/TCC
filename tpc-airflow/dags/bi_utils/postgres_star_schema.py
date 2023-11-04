@@ -128,7 +128,6 @@ def create_table_from_dataframe_postgresql(
         "float64": "FLOAT",
         "object": "TEXT",
         "datetime64[ns]": "TIMESTAMP",
-        "datetime64[us]": "TIMESTAMP",
     }
     types = [types_mapping[str(t)] for t in types]
 
