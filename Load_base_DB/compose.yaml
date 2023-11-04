@@ -8,6 +8,4 @@ services:
       - .:/opt
     working_dir: /opt
     command: bash -c "python3 load_db.py load-all ${HOST_FLAG}"
-    # command: bash -c "
-    #     pip install typer 
-    #     && python3 load_db.py load-all ${HOST_FLAG}"
+

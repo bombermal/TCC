@@ -4,13 +4,8 @@ import typer
 import socket
 import datetime 
 import dask.dataframe as dd
-#from string import Template
-# import xml.etree.ElementTree as ET
 from typing_extensions import Annotated
 from psycopg2 import connect
-#from sqlalchemy import create_engine
-
-#import pandas as pd
 
 # Default Variables
 OS_TYPE = os.name
@@ -88,7 +83,7 @@ def create_connection(
     conn = connect(database=params['database'], user=params['username'],
                         password=params['password'], host=params['host'], port=params['port'])
     cur = conn.cursor()
-    cur.execute(f'SET search_path TO {params['schema']}')
+    cur.execute(f'SET search_path TO {params["schema"]}')
     return conn, cur
 
 @app.command(help="Generic load Pandas Dataframe to Database.")
@@ -189,6 +184,14 @@ def tb_date(
     conn: Annotated[str, "Connection object."],
     file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """
+    Load data from a file into the Date table.
+
+    Args:
+        cur (str): Cursor object.
+        conn (str): Connection object.
+        file_path (str, optional): Path to the directory containing the files to be loaded. Defaults to default_source_path.
+    """
     file_name = "Date"
     cols = ["SK_DateID", "DateValue", "DateDesc", "Calendar_YearID", "CalendarYearDesc", "CalendarQtrID", "CalendarQtrDesc",
             "CalendarMonthID", "CalendarMonthDesc", "CalendarWeekID", "CalendarWeekDesc", "DayOfWeekNum", "DayOfWeekDesc",
@@ -202,8 +205,17 @@ def finwire(
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
         ):
-
+    """
+    Load Finwire CMP, SEC e FIN table.
     
+    Args:
+        cur (str): Cursor object.
+        conn (str): Connection object.
+        file_path (str): Path to the directory containing the files to be loaded.
+    
+    Returns:
+        None
+    """    
     # Finwire - Find all files names and sort them
     fin_files = os.listdir(f"{file_path}")
     fin_files = filter(lambda y: "audit" not in y, filter(lambda x: "FINWIRE" in x, fin_files))
@@ -215,8 +227,8 @@ def finwire(
         df_temp = dd.concat( [df_temp, dd.read_csv(f"{file_path}/{file}", header=None, names=["temp_col"])])
     df_temp["type"] = df_temp.temp_col.map(lambda x: x[15:18])
     
-    cmp_cols = ["PTS", "RecType", "CompanyName", "CIK", "Status", "IndustryID", "SPrating", "FoundingDate", "AddrLine1", "AddrLine2"
-            , "PostalCode", "City", "StateProvince", "Country", "CEOname", "Description"]
+    cmp_cols = ["PTS", "RecType", "CompanyName", "CIK", "Status", "IndustryID", "SPrating", "FoundingDate", "AddrLine1", "AddrLine2",
+                "PostalCode", "City", "StateProvince", "Country", "CEOname", "Description"]
     sec_cols = ["PTS", "RecType", "Symbol", "IssueType", "Status", "Name", "ExID", "Shout", "FirstTradeDate", "FirstTradeExchg",
                 "Dividend", "CoNameOrCIK"]
     fin_cols = ["PTS", "RecType", "Year", "Quarter", "QtrStartDate", "PostingDate", "Revenue", "Earnings", "EPS", "DilutedEPS",
@@ -271,8 +283,6 @@ def finwire(
     generic_write(cur=cur, conn=conn, file_name="Finwire_cmp", file_path=file_path, ext="csv", cols=cmp_cols)
     generic_write(cur=cur, conn=conn, file_name="Finwire_sec", file_path=file_path, ext="csv", cols=sec_cols)
     generic_write(cur=cur, conn=conn, file_name="Finwire_fin", file_path=file_path, ext="csv", cols=fin_cols)
-    
-    # del df_finwire_cmp, df_finwire_sec, df_finwire_fin
 
 @app.command(help="Load HoldingHistory table.")
 def holding_hist(
@@ -280,11 +290,18 @@ def holding_hist(
             conn: Annotated[str, "Connection object."],
             file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """Loads data from files into the HoldingHistory table.
 
-    # Variables
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     file_name = "HoldingHistory"
     cols = ["HH_H_T_ID", "HH_T_ID", "HH_BEFORE_QTY", "HH_AFTER_QTY"]
-    # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, cols=cols)
 
 @app.command(help="Load HoldingHistory table.")
@@ -293,6 +310,17 @@ def hr(
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """
+    Load HoldingHistory table.
+
+    Args:
+        cur: Cursor object.
+        conn: Connection object.
+        file_path: Path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     
     # Variables
     file_name = "HR"
@@ -303,24 +331,44 @@ def hr(
     # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, ext=ext, sep=sep, cols=cols)
 
-@app.command(help="Load Industry table.")    
+@app.command(help="Load Industry table.")
 def industry(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """Loads data from the Industry table into the database.
+
+    Args:
+        cur: Cursor object.
+        conn: Connection object.
+        file_path: Path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "Industry"
     cols = ["IN_ID", "IN_NAME", "IN_SC_ID"] 
     # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, cols=cols)
 
-@app.command(help="Load Prospect table.")    
+@app.command(help="Load Prospect table.")
 def prospect(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """Loads the Prospect table from a CSV file.
+
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "Prospect"
     ext = "csv"
@@ -331,36 +379,62 @@ def prospect(
     # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, ext=ext, sep=sep, cols=cols)
 
-@app.command(help="Load StatusType table.")    
+@app.command(help="Load StatusType table.")
 def statustype(
-             cur: Annotated[str, "Cursor object."],
-            conn: Annotated[str, "Connection object."],
-            file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-        ):
-    # Variables
+    cur: Annotated[str, "Cursor object."],
+    conn: Annotated[str, "Connection object."],
+    file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
+):
+    """Loads the StatusType table from CSV files.
+
+    Args:
+        cur: A cursor object for executing SQL queries.
+        conn: A connection object to the database.
+        file_path: The path to the directory containing the CSV files to be loaded.
+
+    Returns:
+        None
+    """
     file_name = "StatusType"
     cols = ["ST_ID", "ST_NAME"]
-    # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, cols=cols)
    
-@app.command(help="Load TaxRate table.")    
-def taxrate(     
-        cur: Annotated[str, "Cursor object."],
-        conn: Annotated[str, "Connection object."],
-        file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-    ):                                                           
-    # Variables
-    file_name = "TaxRate"         
+@app.command(help="Load TaxRate table.")
+def taxrate(
+    cur: Annotated[str, "Cursor object."],
+    conn: Annotated[str, "Connection object."],
+    file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
+):
+    """Loads data from a file into the TaxRate table.
+
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
+    file_name = "TaxRate"
     cols = ["TX_ID", "TX_NAME", "TX_RATE"]
-    # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, cols=cols)
 
-@app.command(help="Load Time table.")    
+@app.command(help="Load Time table.")
 def time(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """Loads data from the Time table into the database.
+
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "Time"
     cols = ["SK_TimeID", "TimeValue", "HourID", "HourDesc", "MinuteID", "MinuteDesc",
@@ -373,19 +447,37 @@ def tradehistory(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-    ):   
-    # Variables
+    ):
+    """Loads the TradeHistory table from files in the specified directory.
+
+    Args:
+        cur: A cursor object for executing SQL queries.
+        conn: A connection object to the database.
+        file_path: The path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     file_name = "TradeHistory"
     cols = ["TH_T_ID", "TH_DTS", "TH_ST_ID"]  
-    # Write do DB
     generic_write(cur=cur, conn=conn, file_name=file_name, file_path=file_path, cols=cols)
 
-@app.command(help="Load Trade table.")    
+@app.command(help="Load Trade table.")
 def trade(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-    ): 
+    ):
+    """Loads the Trade table from files in the specified directory to the database.
+
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "Trade"
     cols = ["T_ID", "T_DTS", "T_ST_ID", "T_TT_ID", "T_IS_CASH", "T_S_SYMB", "T_QTY", "T_BID_PRICE", "T_CA_ID", "T_EXEC_NAME",
@@ -398,7 +490,18 @@ def tradetype(
         cur: Annotated[str, "Cursor object."],
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-    ):    
+    ):
+    """
+    Loads the TradeType table.
+
+    Args:
+        cur: A cursor object.
+        conn: A connection object.
+        file_path: A string representing the path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "TradeType"
     cols = ["TT_ID", "TT_NAME", "TT_IS_SELL", "TT_IS_MRKT"]
@@ -411,6 +514,17 @@ def watchhistory(
         conn: Annotated[str, "Connection object."],
         file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
     ):
+    """
+    Loads the WatchHistory table from a directory containing the files to be loaded.
+
+    Args:
+        cur: Cursor object.
+        conn: Connection object.
+        file_path: Path to the directory containing the files to be loaded.
+
+    Returns:
+        None
+    """
     # Variables
     file_name = "WatchHistory"
     cols = ["W_C_ID", "W_S_SYMB", "W_DTS", "W_ACTION"]

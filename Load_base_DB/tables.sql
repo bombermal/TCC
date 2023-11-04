@@ -62,6 +62,7 @@ CREATE TABLE finwire_sec (
 	PTS CHAR(15) NOT null,
 	RecType CHAR(3) NOT null,
 	Symbol CHAR(15) NOT null,
+	IssueType CHAR(6) NOT null,
 	Status CHAR(4) NOT null,
 	Name CHAR(70) NOT null,
 	ExID CHAR(6) NOT null,
@@ -89,7 +90,7 @@ CREATE TABLE finwire_fin (
 	Liabilities CHAR(17) NOT null,
 	ShOut CHAR(13) NOT null,
 	DilutedShOut CHAR(13) NOT null,
-	CoNameOrClK CHAR(60) NOT null
+	CoNameOrCIK CHAR(60) NOT null
 );
 
 CREATE TABLE HoldingHistory (

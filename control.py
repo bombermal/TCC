@@ -373,7 +373,7 @@ def benchmark(
     
     dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
     
-    sf_list = [31]
+    sf_list = [3]
     for _ in range(test_range):
         sf_list.append(round(sf_list[-1] * 1.5))
     sf_list.pop(-1)
