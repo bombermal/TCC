@@ -31,28 +31,28 @@ esqueleto: ## cria todas as pastas necessárias para extração dos arquivos
 ## @ inicializacao
 .PHONY: iniciar
 iniciar: ## inicia o airflow
-	docker-compose up -d --build
+	docker compose up -d --build
 
 ## @ importacao
 .PHONY: importar
 importar: ## importa as variaveis e conexoes do airflow
 
 # python3 juntar_variaveis_em_um_unico_json.py
-	docker-compose exec airflow-worker airflow variables import ./dags/configs/variables.json
-	docker-compose exec airflow-worker airflow connections import ./dags/configs/connections.json --overwrite
+	docker compose exec airflow-worker airflow variables import ./dags/configs/variables.json
+	docker compose exec airflow-worker airflow connections import ./dags/configs/connections.json --overwrite
 
 ## @ exportacao
 .PHONY: exportar
 exportar: autorizarPastas ## exporta as variaveis e conexoes do airflow
-	docker-compose exec airflow-worker airflow variables export ./dags/variables.json
-	docker-compose exec airflow-worker airflow connections export ./dags/connections.json
+	docker compose exec airflow-worker airflow variables export ./dags/variables.json
+	docker compose exec airflow-worker airflow connections export ./dags/connections.json
 	
 
 ## @ ativa e executa todas as dags do $nome_projeto
 .PHONY: rodar $(nome_projeto)
 rodar $(nome_projeto):
-	docker-compose -T exec airflow-scheduler for i in $(grep -oP '(?<="dag_id": ")[^"]*' <(airflow dags list -o json -S $AIRFLOW_HOME/dags/$(nome_projeto))); do    airflow dags unpause $i; done
-	docker-compose -T exec airflow-scheduler for i in $(grep -oP '(?<="dag_id": ")[^"]*' <(airflow dags list -o json -S $AIRFLOW_HOME/dags/$(nome_projeto))); do    airflow dags trigger $i; done
+	docker compose -T exec airflow-scheduler for i in $(grep -oP '(?<="dag_id": ")[^"]*' <(airflow dags list -o json -S $AIRFLOW_HOME/dags/$(nome_projeto))); do    airflow dags unpause $i; done
+	docker compose -T exec airflow-scheduler for i in $(grep -oP '(?<="dag_id": ")[^"]*' <(airflow dags list -o json -S $AIRFLOW_HOME/dags/$(nome_projeto))); do    airflow dags trigger $i; done
 
 ## @ download jars
 .PHONY: jars

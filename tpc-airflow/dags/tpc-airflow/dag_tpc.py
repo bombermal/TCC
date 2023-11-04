@@ -22,6 +22,12 @@ default_args = {
 
 DAG_NAME = "dag_tpc"
 DAG_DESCRIPTION = "DAG TESTES SINTÉTICOS"
+# File path
+NB_TPC = "/opt/airflow/dags/tpc-airflow/spark_jobs/TPC.ipynb"
+
+# Conn Ids
+CONN_SOURCE = Connection.get_connection_from_secrets("SOURCE")
+CONN_TARGET = Connection.get_connection_from_secrets("TARGET")
 
 # Instanciação da DAG
 dag = DAG(
@@ -31,13 +37,6 @@ dag = DAG(
     catchup=False,
     # schedule_interval= timedelta(hours=12)
 )
-
-# File path
-NB_TPC = "/opt/airflow/dags/tpc/spark_jobs/TPC.ipynb"
-
-# Conn Ids
-CONN_SOURCE = Connection.get_connection_from_secrets("SOURCE")
-CONN_TARGET = Connection.get_connection_from_secrets("TARGET")
 
 # Get connection data
 NB_PARAMETERS = {
