@@ -24,7 +24,7 @@ else:  # for Unix-based systems
     MACHINE_IP = os.popen('hostname -I').read()
     
 ABS_PATH = "Ivan/OneDrive/Projetos/Códigos ( Profissional )/Material criado/TCC/"
-if HOSTNAME == "residenciabi-04":
+if (HOSTNAME == "residenciabi-04") | (HOSTNAME == "storage"):
     ABS_PATH = "opt/bi/TCC/"
 
 print("OS_TYPE:", OS_TYPE)
@@ -143,8 +143,9 @@ def populate_db(
         None
     """
     data_create_path = ABS_PATH + "Data_create/"
+    
     # Home or Work
-    home_prefix = "/mnt/d/" if (HOSTNAME != "residenciabi-04") else "/"
+    home_prefix = "/mnt/d/" if (OS_TYPE != "nt") & (HOSTNAME != "storage") else "/"
     
     data_create_path = "D:/"+ data_create_path if OS_TYPE == "nt" else home_prefix + data_create_path
     
@@ -160,7 +161,7 @@ def populate_db(
     # Run docker compose up command
     if OS_TYPE == "nt":
         # Run docker compose up command on windows    
-        command = ["docker-compose", "-f", compose_path, "up", "-d"]
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
         print("Compose path:", compose_path)  
         try:
             subprocess.run(command, check=True, shell=True)
@@ -168,7 +169,7 @@ def populate_db(
             print("An error occurred:", e)
     else:
         # Run docker compose up command on linux
-        command = ["docker-compose", "-f", compose_path, "up", "-d"]
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
         print("Compose path:", compose_path)  
         try:
             subprocess.run(command, check=True, shell=False)
@@ -212,6 +213,7 @@ def populate_db(
         print(f"Error while moving directory {output}. Old -> New Path\n{e}")
 
     compose_path = "D:/"+ ABS_PATH + f"Load_base_DB/" + "compose.yaml" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB/" + "compose.yaml"
+    
     # Run python load_db.py container
     if OS_TYPE == "nt":
         # Run docker compose up command on windows    
@@ -275,7 +277,6 @@ def check_airbyte(
     response = requests.get(url, auth=(user, password))
     print(f'Airbyte check:\n{response.text}\nCode:{response.status_code}')
  
-
 @app.command(help="Start Airbyte sync.")
 def sync_airbyte(
     host: Annotated[str, "Host address"] = "192.168.1.33",
@@ -408,8 +409,11 @@ def sync_airflow(
     while condition:
         time.sleep(5)
         response = requests.get(root_url, auth=(user, password))
-        if response.json()["dag_runs"][-1]['state'] == 'success':
+        response_status = response.json()["dag_runs"][-1]['state']
+        if response_status == 'success':
             condition = False
+        elif response_status == 'failed':
+            break
 
     print("Airflow sync finished.")
     response_tasks = response.json()["dag_runs"]
@@ -424,7 +428,6 @@ def sync_airflow(
                  "TimeDelta": round(timedelta.total_seconds(), 2)}
     
     return resp_dict
-    
     
 @app.command(help="Start benchmark.")
 def benchmark(
