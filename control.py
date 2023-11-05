@@ -9,6 +9,8 @@ import requests
 import subprocess
 import pandas as pd
 from string import Template
+from base64 import b64encode
+from datetime import datetime
 from sqlalchemy import create_engine
 from typing_extensions import Annotated
 
@@ -275,11 +277,10 @@ def check_airbyte(
  
 @app.command(help="Start Airbyte sync.")
 def sync_airbyte(
-    host: str = "192.168.1.33",
-    port: int = 8006,
-    user: str = "admin",
-    password: str = "12345",
-    return_dict: bool = False
+    host: Annotated[str, "Host address"] = "192.168.1.33",
+    port: Annotated[int, "Host Port" ] = 8006,
+    user: Annotated[str, "User"] = "admin",
+    password: Annotated[str, "Password"] = "12345"
     ):
     """
     Force Reset and Syncs data from an Airbyte connection.
@@ -351,24 +352,70 @@ def sync_airbyte(
         
     print("Airbyte sync finished.")
       
-    if return_dict:
-        # Calculate througput
-        jobs_df = pd.DataFrame(jobs_list)
-        jobs_df.startTime = pd.to_datetime(jobs_df.startTime, format='ISO8601')
-        jobs_df.lastUpdatedAt = pd.to_datetime(jobs_df.lastUpdatedAt, format='ISO8601')
-        jobs_df['TimeDelta'] = jobs_df.lastUpdatedAt - jobs_df.startTime
-        jobs_df.TimeDelta = jobs_df.TimeDelta.dt.seconds
-        jobs_df['Throughput'] = round(jobs_df.rowsSynced / jobs_df.TimeDelta, 2)
-    
-        idx = jobs_df.index[-1]
-        columns = ["jobId", "jobType", "startTime", "bytesSynced", "rowsSynced", "TimeDelta", "Throughput"]
-        
-        return jobs_df.loc[idx,columns].to_dict()
+    # Calculate througput
+    jobs_df = pd.DataFrame(jobs_list)
+    jobs_df.startTime = pd.to_datetime(jobs_df.startTime, format='ISO8601')
+    jobs_df.lastUpdatedAt = pd.to_datetime(jobs_df.lastUpdatedAt, format='ISO8601')
+    jobs_df['TimeDelta'] = jobs_df.lastUpdatedAt - jobs_df.startTime
+    jobs_df.TimeDelta = jobs_df.TimeDelta.dt.seconds
+    jobs_df['Throughput'] = round(jobs_df.rowsSynced / jobs_df.TimeDelta, 2)
 
+    idx = jobs_df.index[-1]
+    columns = ["jobId", "jobType", "startTime", "bytesSynced", "rowsSynced", "TimeDelta", "Throughput"]
+    
+    return jobs_df.loc[idx,columns].to_dict()
+
+@app.command(help="Start Airflow sync.")
+def sync_airflow(
+    host: Annotated[str, "Host address"] = "192.168.1.32",
+    port: Annotated[int, "Host Port" ] = 12464,
+    user: Annotated[str, "User"] = "airflow",
+    password: Annotated[str, "Password"] = "airflow",
+    dag_id: Annotated[str, "DAG ID."] = "dag_tpc"
+    ):    
+    
+    root_url = f"http://{host}:{port}/api/v1/dags/{dag_id}/dagRuns"
+    dag_run_id = f'manual_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")}'
+    
+    payload = {
+            "dag_run_id": dag_run_id
+            }
+    
+    print("Starting Airflow sync...")
+    response = requests.post(root_url, auth=(user, password), json=payload)
+    # verificando a resposta
+    if response.status_code == 200:
+        print("Tarefa executada.")
+    else:
+        print(f"Erro ao criar tarefa: {response.content}")
+        
+    condition = True
+    while condition:
+        time.sleep(5)
+        response = requests.get(root_url, auth=(user, password))
+        if response.json()["dag_runs"][-1]['state'] == 'success':
+            condition = False
+
+    print("Airflow sync finished.")
+    response_tasks = response.json()["dag_runs"]
+    for ii in response_tasks[::-1]:
+        if ii["dag_run_id"] ==  dag_run_id:
+            start = ii["start_date"]
+            end = ii["end_date"]
+            timedelta = datetime.fromisoformat(end) - datetime.fromisoformat(start)
+            break
+    
+    resp_dict = {"benchmark_id": dag_run_id, "startTime": start, "endTime": end,
+                 "TimeDelta": round(timedelta.total_seconds(), 2)}
+    
+    return resp_dict
+    
+    
 @app.command(help="Start benchmark.")
 def benchmark(
     test_range: Annotated[int, "Number of tests to run."] = 1,
-    output: Annotated[str, "Output folder name."] = "Result_json"
+    output: Annotated[str, "Output folder name."] = "Result_json",
+    framework: Annotated[str, "Framework to use. Can be 'airbyte' or 'airflow'."] = "airbyte"
     ):
     
     dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
@@ -378,7 +425,10 @@ def benchmark(
         sf_list.append(round(sf_list[-1] * 1.5))
     sf_list.pop(-1)
     print(f"\nBenchmark range: {sf_list}\n")
-    for id_num, tst in enumerate(sf_list):
+    
+    for tst in sf_list:
+        # Createa unique ID
+        id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('ascii'))
         # Populate DB
         s_time = time.time()
         populate_db(sf=tst)
@@ -406,17 +456,23 @@ def benchmark(
         aux = {key: value for key, value in zip(dct_keys, dct_values)}
         
         # save json file as result.json append as newline
-        with open(f'{output}/populate_source.txt', 'a') as file:
+        with open(f'{output}/{framework}_populate_source.txt', 'a') as file:
             json.dump(aux, file)
             file.write('\n')
-            
-        # Reset Airbyte
-        result_dict = sync_airbyte(return_dict=True)
-        # Timestamp to string
-        result_dict['startTime'] = result_dict['startTime'].strftime("%Y-%m-%d %H:%M:%S")
-        result_dict['operation'] = 'sync_airbyte'
-        result_dict["benchmark_id"] = id_num
-        with open(f'{output}/airbyte_status.txt', 'a') as file:
+
+        if framework == 'airbyte':            
+            # Reset Airbyte
+            result_dict = sync_airbyte()
+            # Timestamp to string
+            result_dict['startTime'] = result_dict['startTime'].strftime("%Y-%m-%d %H:%M:%S")
+            result_dict['operation'] = 'sync_airbyte'
+            result_dict["benchmark_id"] = id_num
+        else:
+            result_dict = sync_airflow()
+            result_dict['operation'] = 'sync_airflow'
+            result_dict["benchmark_id"] = id_num    
+        
+        with open(f'{output}/{framework}_status.txt', 'a') as file:
             json.dump(result_dict, file)
             file.write('\n')
         
@@ -428,12 +484,12 @@ def benchmark(
         rows_count = df_aux.row_count.to_list()
         total_size_bytes = df_aux.total_size_bytes.to_list()
         
-        operation = 'sync_airbyte'
-        dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
+        dct_keys = ['benchmark_id', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
+        dct_values = [id_num, tst, tables_names, rows_count, total_size_bytes]
         aux = {key: value for key, value in zip(dct_keys, dct_values)}
         
         # save json file as result.json append as newline
-        with open(f'{output}/populate_target.txt', 'a') as file:
+        with open(f'{output}/{framework}_populate_target.txt', 'a') as file:
             json.dump(aux, file)
             file.write('\n')
         

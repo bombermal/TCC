@@ -17,7 +17,7 @@ default_args = {
     "email_on_retry": False,            #Indica se o email será enviado em caso de retry
     "retries": 1,                       #Número de tentativas de execução
     "retry_delay": timedelta(seconds=5),#Tempo entre as tentativas
-    "schedule_interval": "None",      #Intervalo de execução da DAG
+    "schedule_interval": None,      #Intervalo de execução da DAG
 }
 
 DAG_NAME = "dag_tpc"
