@@ -275,6 +275,7 @@ def check_airbyte(
     response = requests.get(url, auth=(user, password))
     print(f'Airbyte check:\n{response.text}\nCode:{response.status_code}')
  
+
 @app.command(help="Start Airbyte sync.")
 def sync_airbyte(
     host: Annotated[str, "Host address"] = "192.168.1.33",
@@ -283,7 +284,7 @@ def sync_airbyte(
     password: Annotated[str, "Password"] = "12345"
     ):
     """
-    Force Reset and Syncs data from an Airbyte connection.
+    This function starts an Airbyte sync. It resets and syncs data from an Airbyte connection.
 
     Args:
         host (str): Airbyte host.
@@ -372,7 +373,21 @@ def sync_airflow(
     user: Annotated[str, "User"] = "airflow",
     password: Annotated[str, "Password"] = "airflow",
     dag_id: Annotated[str, "DAG ID."] = "dag_tpc"
-    ):    
+    ):
+    """
+    This function starts an Airflow sync by sending a POST request to the Airflow API.
+    It waits for the sync to finish and returns a dictionary with the benchmark_id, startTime, endTime and TimeDelta.
+    
+    Args:
+        host (str): Host address. Default is "192.168.1.32".
+        port (int): Host Port. Default is 12464.
+        user (str): User. Default is "airflow".
+        password (str): Password. Default is "airflow".
+        dag_id (str): DAG ID. Default is "dag_tpc".
+    
+    Returns:
+        dict: A dictionary with the benchmark_id, startTime, endTime and TimeDelta.
+    """
     
     root_url = f"http://{host}:{port}/api/v1/dags/{dag_id}/dagRuns"
     dag_run_id = f'manual_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")}'
@@ -414,21 +429,31 @@ def sync_airflow(
 @app.command(help="Start benchmark.")
 def benchmark(
     test_range: Annotated[int, "Number of tests to run."] = 1,
+    test_start: Annotated[int, "Indicate the starting scale for the test"] = 3,
     output: Annotated[str, "Output folder name."] = "Result_json",
     framework: Annotated[str, "Framework to use. Can be 'airbyte' or 'airflow'."] = "airbyte"
     ):
+    """
+    Runs a benchmark test for a given range of scale factors, populating a database, syncing data using either Airbyte or Airflow, and saving the results in JSON files.
+
+    Args:
+        test_range (int): Number of tests to run.
+        output (str): Output folder name.
+        framework (str): Framework to use. Can be 'airbyte' or 'airflow'.
+
+    Returns:
+        None
+    """
     
-    dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
-    
-    sf_list = [3]
+    sf_list = [test_start]
     for _ in range(test_range):
-        sf_list.append(round(sf_list[-1] * 1.5))
+        sf_list.append(round(sf_list[-1] * 1.2))
     sf_list.pop(-1)
     print(f"\nBenchmark range: {sf_list}\n")
     
     for tst in sf_list:
         # Createa unique ID
-        id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('ascii'))
+        id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('utf-8')).decode('utf-8')
         # Populate DB
         s_time = time.time()
         populate_db(sf=tst)
@@ -452,9 +477,11 @@ def benchmark(
         rows_count = df_aux.row_count.to_list()
         total_size_bytes = df_aux.total_size_bytes.to_list()
         
+        dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
+        
         dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
         aux = {key: value for key, value in zip(dct_keys, dct_values)}
-        
+            
         # save json file as result.json append as newline
         with open(f'{output}/{framework}_populate_source.txt', 'a') as file:
             json.dump(aux, file)
