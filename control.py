@@ -385,7 +385,7 @@ def sync_airflow(
     response = requests.post(root_url, auth=(user, password), json=payload)
     # verificando a resposta
     if response.status_code == 200:
-        print("Tarefa executada.")
+        print("Post enviado.")
     else:
         print(f"Erro ao criar tarefa: {response.content}")
         
