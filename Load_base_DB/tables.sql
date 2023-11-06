@@ -34,7 +34,7 @@ CREATE TABLE date (
 	DayOfWeekDesc CHAR(10) NOT null,
 	FiscalYearID NUMERIC(4) NOT null,
 	FiscalYearDesc CHAR(20) NOT null,
-	FiscalQtrlID NUMERIC(5) NOT null,
+	FiscalQtrID NUMERIC(5) NOT null,
 	FiscalQtrDesc CHAR(20) NOT null,
 	HolidayFlag BOOLEAN
 );

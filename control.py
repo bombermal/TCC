@@ -35,7 +35,7 @@ default_conn_params_source = {
     "drivername": "postgresql",
     "username": "postgres",
     "password": "postgres",
-    "host": "192.168.1.30",
+    "host": "192.168.1.30", #"192.168.1.30"
     "port": "5432",
     "database": "tpc"
 }
@@ -43,7 +43,7 @@ default_conn_params_target = {
     "drivername": "postgresql",
     "username": "postgres",
     "password": "postgres",
-    "host": "192.168.1.31",
+    "host": "192.168.1.31", #"192.168.1.31"
     "port": "5432",
     "database": "tpc"
 }
@@ -145,7 +145,7 @@ def populate_db(
     data_create_path = ABS_PATH + "Data_create/"
     
     # Home or Work
-    home_prefix = "/mnt/d/" if (OS_TYPE != "nt") & (HOSTNAME != "storage") else "/"
+    home_prefix = "/"
     
     data_create_path = "D:/"+ data_create_path if OS_TYPE == "nt" else home_prefix + data_create_path
     
@@ -465,7 +465,7 @@ def benchmark(
         
         conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_source)
         engine = create_engine(conn_string, echo=False)
-        
+        print(conn_string)
         query = """SELECT
             relname AS table_name,
             n_live_tup AS row_count,

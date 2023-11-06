@@ -193,7 +193,7 @@ def tb_date(
         file_path (str, optional): Path to the directory containing the files to be loaded. Defaults to default_source_path.
     """
     file_name = "Date"
-    cols = ["SK_DateID", "DateValue", "DateDesc", "Calendar_YearID", "CalendarYearDesc", "CalendarQtrID", "CalendarQtrDesc",
+    cols = ["SK_DateID", "DateValue", "DateDesc", "CalendarYearID", "CalendarYearDesc", "CalendarQtrID", "CalendarQtrDesc",
             "CalendarMonthID", "CalendarMonthDesc", "CalendarWeekID", "CalendarWeekDesc", "DayOfWeekNum", "DayOfWeekDesc",
             "FiscalYearID", "FiscalYearDesc", "FiscalQtrID", "FiscalQtrDesc", "HolidayFlag"]
     
@@ -573,6 +573,7 @@ def load_all(
     
     cash_trans(cur=cur, conn=conn, file_path=files_path)
     daily_market(cur=cur, conn=conn, file_path=files_path)
+    tb_date(cur=cur, conn=conn, file_path=files_path)
     finwire(cur=cur, conn=conn, file_path=files_path)
     holding_hist(cur=cur, conn=conn, file_path=files_path)
     hr(cur=cur, conn=conn, file_path=files_path)
