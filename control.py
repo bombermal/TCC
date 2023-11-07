@@ -50,9 +50,8 @@ default_conn_params_target = {
     "database": "tpc",
     "schema": "tpc"
 }
-GET_TABLES_ROWS_QUERY = """SELECT
-	    relname AS table_name,
-	    pg_total_relation_size(relid) AS total_size_bytes
+GET_TABLES_NAMES_QUERY = """SELECT
+	    relname AS table_name
 	FROM 
 	    pg_stat_user_tables
 	WHERE 
@@ -539,17 +538,21 @@ def benchmark(
             conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_source)
             engine = create_engine(conn_string, echo=False)
             # print(conn_string)
-            query = GET_TABLES_ROWS_QUERY
+            query = GET_TABLES_NAMES_QUERY
 
             df_aux = pd.read_sql(query, engine)
             df_aux.sort_values(by="table_name", inplace=True)
             tables_names = df_aux.table_name.to_list()
             df_aux["n_rows"] = 0
+            df_aux["total_size_bytes"] = 0
             for tbl in tables_names:
                 # Count rows query
                 count_query = f"SELECT COUNT(*) FROM tpc.{tbl}"
+                size_query = f"SELECT pg_relation_size('tpc.{tbl}')"
                 count_resp = pd.read_sql(count_query, engine).values[0][0]
+                size_resp = pd.read_sql(size_query, engine).values[0][0]
                 df_aux.loc[df_aux.table_name == tbl, "n_rows"] = count_resp
+                df_aux.loc[df_aux.table_name == tbl, "total_size_bytes"] = size_resp
             total_size_bytes = df_aux.total_size_bytes.to_list()
             rows_count = df_aux.n_rows.to_list()
             
@@ -586,11 +589,15 @@ def benchmark(
             df_aux.sort_values(by="table_name", inplace=True)
             target_tables_names = df_aux.table_name.to_list()
             df_aux["n_rows"] = 0
+            df_aux["total_size_bytes"] = 0
             for tbl in target_tables_names:
                 # Count rows query
                 count_query = f"SELECT COUNT(*) FROM tpc.{tbl}"
+                size_query = f"SELECT pg_relation_size('tpc.{tbl}')"
                 count_resp = pd.read_sql(count_query, engine).values[0][0]
+                size_resp = pd.read_sql(size_query, engine).values[0][0]
                 df_aux.loc[df_aux.table_name == tbl, "n_rows"] = count_resp
+                df_aux.loc[df_aux.table_name == tbl, "total_size_bytes"] = size_resp
             total_size_bytes = df_aux.total_size_bytes.to_list()
             rows_count = df_aux.n_rows.to_list()
             
