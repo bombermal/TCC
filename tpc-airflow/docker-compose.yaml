@@ -112,8 +112,8 @@ services:
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark:7077
-      - SPARK_WORKER_MEMORY=12G
-      - SPARK_EXECUTOR_MEMORY=12G
+      - SPARK_WORKER_MEMORY=16G
+      - SPARK_EXECUTOR_MEMORY=16G
       - SPARK_WORKER_CORES=4
     ports:
       - '${PORT_SPARK_WORKER:-8082}:8081'
