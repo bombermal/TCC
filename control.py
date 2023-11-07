@@ -532,7 +532,7 @@ def benchmark(
             id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('utf-8')).decode('utf-8')
             # Populate DB
             s_time = time.time()
-            # populate_db()
+            populate_db()
             e_time = time.time()
             operation = 'populate_db'
         
