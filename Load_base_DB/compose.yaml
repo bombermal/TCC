@@ -5,7 +5,7 @@ services:
     image: populate_image #pandas/pandas:pip-all
     container_name: populate_source
     volumes:
-      - .:/opt
+      - /opt/tpc-data:/opt/tpc-data
     working_dir: /opt
-    command: bash -c "python3 load_db.py load-all ${HOST_FLAG}"
+    command: bash -c "python3 load_db.py load-all ${HOST_FLAG} ${INPUT_PATH}"
 

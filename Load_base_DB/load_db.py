@@ -16,10 +16,7 @@ else:  # for Unix-based systems
     HOSTNAME = os.uname()[1]
     MACHINE_IP = os.popen('hostname -I').read()
      
-if ('10.16' in MACHINE_IP) | ('192.168' in MACHINE_IP):
-    default_source_path = 'D:/Ivan/OneDrive/Projetos/Códigos ( Profissional )/Material criado/TCC/Load_base_DB/Synthetic_data'
-else:
-    default_source_path = '/opt/Synthetic_data'
+default_source_path = '/opt/tpc-data'
 
 default_conn_params = {
     "drivername": "postgresql",
@@ -145,7 +142,7 @@ def cash_trans(
     cur: Annotated[str, "Cursor object."],
     conn: Annotated[str, "Connection object."],
     file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-):
+    ):
     """
     Load the CashTransaction table from files located in a directory.
 
@@ -164,7 +161,7 @@ def daily_market(
     cur: Annotated[str, "Cursor object."],
     conn: Annotated[str, "Connection object."],
     file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-):
+    ):
     """
     Load data from files in the specified directory into the DailyMarket table.
     
@@ -384,7 +381,7 @@ def statustype(
     cur: Annotated[str, "Cursor object."],
     conn: Annotated[str, "Connection object."],
     file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-):
+    ):
     """Loads the StatusType table from CSV files.
 
     Args:
@@ -404,7 +401,7 @@ def taxrate(
     cur: Annotated[str, "Cursor object."],
     conn: Annotated[str, "Connection object."],
     file_path: Annotated[str, "Path to the directory containing the files to be loaded."] = default_source_path,
-):
+    ):
     """Loads data from a file into the TaxRate table.
 
     Args:
@@ -568,7 +565,7 @@ def load_all(
         }
     
     files_path = files_source(source_path, batch_path)
-    print(now(start_end="Starting"))
+    print(now(start_end="Starting"), files_path, sep="\n")
     conn, cur = create_connection(params=con_params)
     
     cash_trans(cur=cur, conn=conn, file_path=files_path)

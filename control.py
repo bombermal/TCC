@@ -47,6 +47,13 @@ default_conn_params_target = {
     "port": "5432",
     "database": "tpc"
 }
+GET_TABLES_ROWS_QUERY = """SELECT
+	    relname AS table_name,
+	    pg_total_relation_size(relid) AS total_size_bytes
+	FROM 
+	    pg_stat_user_tables
+	WHERE 
+	    schemaname = 'tpc'"""
 
 app = typer.Typer(help="Control test flow")
 
@@ -128,14 +135,10 @@ def start_stop_monitoring(
         start_stop_monitoring(condition='start')
     
 @app.command(help="Populate source DB.")    
-def populate_db(
-        output: Annotated[str, "Output folder name."] = "Synthetic_data"
-    ):
+def populate_db():
     """
     Populates the source database with synthetic data.
 
-    Args:
-        output (str): Output folder name.
 
     Returns:
         None
@@ -435,13 +438,29 @@ def create_data(
             shutil.move(old_path, new_path )
         except Exception as e:
             print(f"Error while moving directory {output}. Old -> New Path\n{e}")
+
+@app.command(help="Create static data in a choosen directory")
+def static_data(
+    test_range: Annotated[int, "Number of tests to run."] = 1,
+    test_start: Annotated[int, "Indicate the starting scale for the test"] = 3
+    ):
+    sf_list = [test_start]
+    for _ in range(test_range):
+        sf_list.append(round(sf_list[-1] * 1.2))
+    sf_list.pop(-1)
+    print(f"\nBenchmark range: {sf_list}\n")
+    
+    for sf in sf_list:
+        create_data(sf=sf, output=f"sf{sf}", move=False)
+        print(f"Create data for sf = {sf}")
     
 @app.command(help="Start benchmark.")
 def benchmark(
     test_range: Annotated[int, "Number of tests to run."] = 1,
     test_start: Annotated[int, "Indicate the starting scale for the test"] = 3,
     output: Annotated[str, "Output folder name."] = "Result_json",
-    framework: Annotated[str, "Framework to use. Can be 'airbyte' or 'airflow'."] = "airbyte"
+    framework: Annotated[str, "Framework to use. Can be 'airbyte' or 'airflow'."] = "airbyte",
+    use_static: Annotated[bool, "If True use static data or create for each run"] = True
     ):
     """
     Runs a benchmark test for a given range of scale factors, populating a database, syncing data using either Airbyte or Airflow, and saving the results in JSON files.
@@ -462,73 +481,83 @@ def benchmark(
     print(f"\nBenchmark range: {sf_list}\n")
     
     for tst in sf_list:
-        # Createa unique ID
-        id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('utf-8')).decode('utf-8')
-        # Populate DB
-        s_time = time.time()
-        populate_db(sf=tst)
-        e_time = time.time()
-        operation = 'populate_db'
+        if use_static:
+            root_path = '/opt/tpc-data'
+            source_host = ""#--host 10.16.45.131
+            env_string = f"HOST_FLAG='{source_host}'\nINPUT_PATH='--source-path {root_path}/sf{tst}'"
+            env_path = '/opt/bi/TCC/Load_base_DB/.env'
+            # Overwrite the file
+            with open(env_path, 'w') as file:
+                file.write(env_string)
+            # Createa unique ID
+            id_num = b64encode(datetime.now().strftime("%Y%m%d%H%M%S").encode('utf-8')).decode('utf-8')
+            # Populate DB
+            s_time = time.time()
+            # populate_db()
+            e_time = time.time()
+            operation = 'populate_db'
         
-        conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_source)
-        engine = create_engine(conn_string, echo=False)
-        print(conn_string)
-        query = """SELECT
-            relname AS table_name,
-            n_live_tup AS row_count,
-            pg_total_relation_size(relid) AS total_size_bytes
-        FROM 
-            pg_stat_user_tables
-        WHERE 
-            schemaname = 'tpc'"""
+            conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_source)
+            engine = create_engine(conn_string, echo=False)
+            # print(conn_string)
+            query = GET_TABLES_ROWS_QUERY
 
-        df_aux = pd.read_sql(query, engine)
-        tables_names = df_aux.table_name.to_list()
-        rows_count = df_aux.row_count.to_list()
-        total_size_bytes = df_aux.total_size_bytes.to_list()
-        
-        dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
-        
-        dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
-        aux = {key: value for key, value in zip(dct_keys, dct_values)}
+            df_aux = pd.read_sql(query, engine)
+            df_aux.sort_values(by="table_name", inplace=True)
+            tables_names = df_aux.table_name.to_list()
+            df_aux["n_rows"] = 0
+            for tbl in tables_names:
+                # Count rows query
+                count_query = f"SELECT COUNT(*) FROM tpc.{tbl}"
+                count_resp = pd.read_sql(count_query, engine).values[0][0]
+                df_aux.loc[df_aux.table_name == tbl, "n_rows"] = count_resp
+            total_size_bytes = df_aux.total_size_bytes.to_list()
+            rows_count = df_aux.n_rows.to_list()
             
-        # save json file as result.json append as newline
-        with open(f'{output}/{framework}_populate_source.txt', 'a') as file:
-            json.dump(aux, file)
-            file.write('\n')
+            dct_keys = ['benchmark_id', 'operation', 'start_time', 'end_time', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
+            
+            dct_values = [id_num, operation, s_time, e_time, tst, tables_names, rows_count, total_size_bytes]
+            aux = {key: value for key, value in zip(dct_keys, dct_values)}
+                
+            # save json file as result.json append as newline
+            with open(f'{output}/{framework}_populate_source.txt', 'a') as file:
+                json.dump(aux, file)
+                file.write('\n')
 
-        if framework == 'airbyte':            
-            # Reset Airbyte
-            result_dict = sync_airbyte()
-            # Timestamp to string
-            result_dict['startTime'] = result_dict['startTime'].strftime("%Y-%m-%d %H:%M:%S")
-            result_dict['operation'] = 'sync_airbyte'
-            result_dict["benchmark_id"] = id_num
-        else:
-            result_dict = sync_airflow()
-            result_dict['operation'] = 'sync_airflow'
-            result_dict["benchmark_id"] = id_num    
-        
-        with open(f'{output}/{framework}_status.txt', 'a') as file:
-            json.dump(result_dict, file)
-            file.write('\n')
-        
-        conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_target)
-        engine = create_engine(conn_string, echo=False)
-        
-        df_aux = pd.read_sql(query, engine)
-        tables_names = df_aux.table_name.to_list()
-        rows_count = df_aux.row_count.to_list()
-        total_size_bytes = df_aux.total_size_bytes.to_list()
-        
-        dct_keys = ['benchmark_id', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
-        dct_values = [id_num, tst, tables_names, rows_count, total_size_bytes]
-        aux = {key: value for key, value in zip(dct_keys, dct_values)}
-        
-        # save json file as result.json append as newline
-        with open(f'{output}/{framework}_populate_target.txt', 'a') as file:
-            json.dump(aux, file)
-            file.write('\n')
+            if framework == 'airbyte':            
+                # Reset Airbyte
+                result_dict = sync_airbyte()
+                # Timestamp to string
+                result_dict['startTime'] = result_dict['startTime'].strftime("%Y-%m-%d %H:%M:%S")
+                result_dict['operation'] = 'sync_airbyte'
+                result_dict["benchmark_id"] = id_num
+            else:
+                result_dict = sync_airflow()
+                result_dict['operation'] = 'sync_airflow'
+                result_dict["benchmark_id"] = id_num    
+            
+            with open(f'{output}/{framework}_status.txt', 'a') as file:
+                json.dump(result_dict, file)
+                file.write('\n')
+            
+            conn_string = Template("${drivername}://${username}:${password}@${host}:${port}/${database}").safe_substitute(default_conn_params_target)
+            engine = create_engine(conn_string, echo=False)
+            
+            df_aux = pd.read_sql(query, engine)
+            tables_names = df_aux.table_name.to_list()
+            rows_count = df_aux.row_count.to_list()
+            total_size_bytes = df_aux.total_size_bytes.to_list()
+            
+            dct_keys = ['benchmark_id', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
+            dct_values = [id_num, tst, tables_names, rows_count, total_size_bytes]
+            aux = {key: value for key, value in zip(dct_keys, dct_values)}
+            
+            # save json file as result.json append as newline
+            with open(f'{output}/{framework}_populate_target.txt', 'a') as file:
+                json.dump(aux, file)
+                file.write('\n')
+
+
         
 if __name__ == "__main__":
     app()

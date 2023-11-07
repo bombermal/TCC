@@ -1,6 +1,7 @@
 FROM pandas/pandas:pip-all
 
 # Upgrade pip
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip && pip install typer dask
 # Intall Libraries
-RUN pip install typer dask
+WORKDIR /opt
+COPY ./load_db.py /opt/
