@@ -129,88 +129,18 @@ def start_stop_monitoring(
     
 @app.command(help="Populate source DB.")    
 def populate_db(
-    sf: Annotated[int, "Scale fator for ammount of data created."] = 3,
-    output: Annotated[str, "Output folder name."] = "Synthetic_data"
+        output: Annotated[str, "Output folder name."] = "Synthetic_data"
     ):
     """
     Populates the source database with synthetic data.
 
     Args:
-        sf (int): Scale factor for amount of data created.
         output (str): Output folder name.
 
     Returns:
         None
     """
-    data_create_path = ABS_PATH + "Data_create/"
-    
-    # Home or Work
-    home_prefix = "/"
-    
-    data_create_path = "D:/"+ data_create_path if OS_TYPE == "nt" else home_prefix + data_create_path
-    
-    compose_path = data_create_path + "compose.yaml"
-    env_path = data_create_path + ".env"
-    
-    # Prepare .env file
-    env_string = f'QTY={sf}\nOUT="{output}"'
-    # Overwrite the file
-    with open(env_path, 'w') as file:
-        file.write(env_string)
-    
-    # Run docker compose up command
-    if OS_TYPE == "nt":
-        # Run docker compose up command on windows    
-        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
-        print("Compose path:", compose_path)  
-        try:
-            subprocess.run(command, check=True, shell=True)
-        except subprocess.CalledProcessError as e:
-            print("An error occurred:", e)
-    else:
-        # Run docker compose up command on linux
-        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
-        print("Compose path:", compose_path)  
-        try:
-            subprocess.run(command, check=True, shell=False)
-        except subprocess.CalledProcessError as e:
-            print("An error occurred:", e)
-            
-    # Wait 3 seconds
-    time.sleep(3)
-    # Wait for docker container stop running
-    # create a Docker client
-    client = docker.from_env()
-    # check if a container is running
-    container_name = 'data_create'
-    container = client.containers.get(container_name)
-    # wait for the container to stop running
-    count = 1
-    while container.status == 'running':
-        time.sleep(1)
-        # Clear terminal
-        print("\033c")
-        print(f'{container_name.capitalize()} is {container.status}{count*".":<3}')
-        count = (count + 1)% 10
-        container.reload()
-    
-    print(f"{container_name.capitalize()} finished.")  
-    
-    # Move created data to the correct folder
-    old_path = data_create_path + f'Tools/{output}/'
-    new_path = "D:/"+ ABS_PATH + f"Load_base_DB/" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB"
-    # Move directory
-    print("Old path:", old_path)
-    print("New path:", new_path)
-    try:
-        try:
-            shutil.rmtree(f'{new_path}/{output}')
-        except Exception as e:
-            print(e)
-            pass
-        shutil.move(old_path, new_path )
-    except Exception as e:
-        print(f"Error while moving directory {output}. Old -> New Path\n{e}")
+    home_prefix = '/'
 
     compose_path = "D:/"+ ABS_PATH + f"Load_base_DB/" + "compose.yaml" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB/" + "compose.yaml"
     
@@ -428,6 +358,83 @@ def sync_airflow(
                  "TimeDelta": round(timedelta.total_seconds(), 2)}
     
     return resp_dict
+
+@app.command(help="Create and store syntehtic data.")
+def create_data(    
+                sf: Annotated[int, "Scale fator for ammount of data created."] = 3,
+                output: Annotated[str, "Output folder name."] = "Synthetic_data",
+                move: Annotated[bool, "If True, move the data created in the directory."] = True
+                ):
+    
+    data_create_path = ABS_PATH + "Data_create/"
+    
+    # Home or Work
+    home_prefix = "/"
+    
+    data_create_path = "D:/"+ data_create_path if OS_TYPE == "nt" else home_prefix + data_create_path
+    
+    compose_path = data_create_path + "compose.yaml"
+    env_path = data_create_path + ".env"
+    
+    # Prepare .env file
+    env_string = f'QTY={sf}\nOUT="{output}"'
+    # Overwrite the file
+    with open(env_path, 'w') as file:
+        file.write(env_string)
+    
+    # Run docker compose up command
+    if OS_TYPE == "nt":
+        # Run docker compose up command on windows    
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
+        print("Compose path:", compose_path)  
+        try:
+            subprocess.run(command, check=True, shell=True)
+        except subprocess.CalledProcessError as e:
+            print("An error occurred:", e)
+    else:
+        # Run docker compose up command on linux
+        command = ["docker-compose", "-f", compose_path, "up", "-d", "--build"]
+        print("Compose path:", compose_path)  
+        try:
+            subprocess.run(command, check=True, shell=False)
+        except subprocess.CalledProcessError as e:
+            print("An error occurred:", e)
+            
+    # Wait 3 seconds
+    time.sleep(3)
+    # Wait for docker container stop running
+    # create a Docker client
+    client = docker.from_env()
+    # check if a container is running
+    container_name = 'data_create'
+    container = client.containers.get(container_name)
+    # wait for the container to stop running
+    count = 1
+    while container.status == 'running':
+        time.sleep(1)
+        # Clear terminal
+        print("\033c")
+        print(f'{container_name.capitalize()} is {container.status}{count*".":<3}')
+        count = (count + 1)% 10
+        container.reload()
+    
+    print(f"{container_name.capitalize()} finished.")  
+    if move:
+        # Move created data to the correct folder
+        old_path = data_create_path + f'Tools/{output}/'
+        new_path = "D:/"+ ABS_PATH + f"Load_base_DB/" if OS_TYPE == "nt" else home_prefix + ABS_PATH + f"Load_base_DB"
+        # Move directory
+        print("Old path:", old_path)
+        print("New path:", new_path)
+        try:
+            try:
+                shutil.rmtree(f'{new_path}/{output}')
+            except Exception as e:
+                print(e)
+                pass
+            shutil.move(old_path, new_path )
+        except Exception as e:
+            print(f"Error while moving directory {output}. Old -> New Path\n{e}")
     
 @app.command(help="Start benchmark.")
 def benchmark(
