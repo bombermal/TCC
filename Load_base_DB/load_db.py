@@ -4,8 +4,9 @@ import typer
 import socket
 import datetime 
 import dask.dataframe as dd
-from typing_extensions import Annotated
 from psycopg2 import connect
+from typing_extensions import Annotated
+
 
 # Default Variables
 OS_TYPE = os.name

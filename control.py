@@ -9,6 +9,7 @@ import requests
 import subprocess
 import pandas as pd
 from string import Template
+from psycopg2 import connect
 from base64 import b64encode
 from datetime import datetime
 from sqlalchemy import create_engine
@@ -37,7 +38,8 @@ default_conn_params_source = {
     "password": "postgres",
     "host": "192.168.1.30", #"192.168.1.30"
     "port": "5432",
-    "database": "tpc"
+    "database": "tpc",
+    "schema": "tpc"
 }
 default_conn_params_target = {
     "drivername": "postgresql",
@@ -45,7 +47,8 @@ default_conn_params_target = {
     "password": "postgres",
     "host": "192.168.1.31", #"192.168.1.31"
     "port": "5432",
-    "database": "tpc"
+    "database": "tpc",
+    "schema": "tpc"
 }
 GET_TABLES_ROWS_QUERY = """SELECT
 	    relname AS table_name,
@@ -453,7 +456,43 @@ def static_data(
     for sf in sf_list:
         create_data(sf=sf, output=f"sf{sf}", move=False)
         print(f"Create data for sf = {sf}")
-    
+
+@app.command(help="Create connection object.")
+def create_connection(
+                    params: Annotated[str, "Connection parameters."] = default_conn_params_target
+                    ):
+    """
+    Create a connection object to a PostgreSQL database.
+
+    Args:
+        params (str): Connection parameters.
+
+    Returns:
+        tuple: A tuple containing the connection object and cursor object.
+    """
+    conn = connect(database=params['database'], user=params['username'],
+                        password=params['password'], host=params['host'], port=params['port'])
+    cur = conn.cursor()
+    cur.execute(f'SET search_path TO {params["schema"]}')
+    return conn, cur
+
+@app.command(help="Truncate table.")
+def truncate_table(
+        cur:  Annotated[str, "Cursor object."],
+        conn: Annotated[str, "Connection object."],
+        title: Annotated[str, "Title of the table."],
+        ):
+    """
+    Truncates a table in the database.
+
+    Args:
+        cur (Cursor): Cursor object.
+        conn (Connection): Connection object.
+        title (str): Title of the table.
+    """
+    cur.execute(f"TRUNCATE TABLE {title.lower()}")
+    conn.commit()
+        
 @app.command(help="Start benchmark.")
 def benchmark(
     test_range: Annotated[int, "Number of tests to run."] = 1,
@@ -544,19 +583,34 @@ def benchmark(
             engine = create_engine(conn_string, echo=False)
             
             df_aux = pd.read_sql(query, engine)
-            tables_names = df_aux.table_name.to_list()
-            rows_count = df_aux.row_count.to_list()
+            df_aux.sort_values(by="table_name", inplace=True)
+            target_tables_names = df_aux.table_name.to_list()
+            df_aux["n_rows"] = 0
+            for tbl in target_tables_names:
+                # Count rows query
+                count_query = f"SELECT COUNT(*) FROM tpc.{tbl}"
+                count_resp = pd.read_sql(count_query, engine).values[0][0]
+                df_aux.loc[df_aux.table_name == tbl, "n_rows"] = count_resp
             total_size_bytes = df_aux.total_size_bytes.to_list()
+            rows_count = df_aux.n_rows.to_list()
             
             dct_keys = ['benchmark_id', 'sf', 'tables_names', 'rows_count', 'total_size_bytes']
-            dct_values = [id_num, tst, tables_names, rows_count, total_size_bytes]
+            dct_values = [id_num, tst, target_tables_names, rows_count, total_size_bytes]
             aux = {key: value for key, value in zip(dct_keys, dct_values)}
             
             # save json file as result.json append as newline
             with open(f'{output}/{framework}_populate_target.txt', 'a') as file:
                 json.dump(aux, file)
                 file.write('\n')
-
+                
+            # Truncate all tables
+            conn, cur = create_connection(params=default_conn_params_target)
+            for tbl in target_tables_names:
+                truncate_table(cur=cur, conn=conn, title=tbl)
+                
+            conn, cur = create_connection(params=default_conn_params_source)
+            for tbl in tables_names:
+                truncate_table(cur=cur, conn=conn, title=tbl)
 
         
 if __name__ == "__main__":
