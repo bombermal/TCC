@@ -17,8 +17,3 @@
 {"benchmark_id": "MjAyMzExMDcwNjUyMjk=", "startTime": "2023-11-07T06:57:28.524055+00:00", "endTime": "2023-11-07T07:15:18.669786+00:00", "TimeDelta": 1070.15, "operation": "sync_airflow"}
 {"benchmark_id": "MjAyMzExMDcwNzE1MzQ=", "startTime": "2023-11-07T07:21:27.005414+00:00", "endTime": "2023-11-07T07:42:32.643148+00:00", "TimeDelta": 1265.64, "operation": "sync_airflow"}
 {"benchmark_id": "MjAyMzExMDcwNzQyNTA=", "startTime": "2023-11-07T07:49:24.631727+00:00", "endTime": "2023-11-07T08:14:52.496570+00:00", "TimeDelta": 1527.86, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxMTE1MTM=", "startTime": "2023-11-08T11:15:33.143475+00:00", "endTime": "2023-11-08T11:16:39.873089+00:00", "TimeDelta": 66.73, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxMTE2NDE=", "startTime": "2023-11-08T11:17:05.580985+00:00", "endTime": "2023-11-08T11:18:27.076605+00:00", "TimeDelta": 81.5, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxMTE4MzA=", "startTime": "2023-11-08T11:18:59.212708+00:00", "endTime": "2023-11-08T11:20:39.189665+00:00", "TimeDelta": 99.98, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxMTIwNDQ=", "startTime": "2023-11-08T11:21:19.523343+00:00", "endTime": "2023-11-08T11:23:14.971311+00:00", "TimeDelta": 115.45, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxMTIzMTY=", "startTime": "2023-11-08T11:23:53.001202+00:00", "endTime": "2023-11-08T11:26:04.388274+00:00", "TimeDelta": 131.39, "operation": "sync_airflow"}

@@ -343,8 +343,8 @@ def sync_airflow(
     condition = True
     while condition:
         time.sleep(5)
-        response = requests.get(root_url, auth=(user, password))
-        response_status = response.json()["dag_runs"][-1]['state']
+        response = requests.get(root_url+"?order_by=-execution_date&limit=2", auth=(user, password))
+        response_status = response.json()["dag_runs"][0]['state']
         if response_status == 'success':
             condition = False
         elif response_status == 'failed':
@@ -352,7 +352,7 @@ def sync_airflow(
 
     print("Airflow sync finished.")
     response_tasks = response.json()["dag_runs"]
-    for ii in response_tasks[::-1]:
+    for ii in response_tasks:
         if ii["dag_run_id"] ==  dag_run_id:
             start = ii["start_date"]
             end = ii["end_date"]
