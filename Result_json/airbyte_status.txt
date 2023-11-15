@@ -18,3 +18,4 @@
 {"jobId": 202, "jobType": "sync", "startTime": "2023-11-14 23:01:59", "bytesSynced": 15463272610, "rowsSynced": 115547160, "TimeDelta": 8289, "Throughput": 13939.82, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTQyMjU1MzA="}
 {"jobId": 204, "jobType": "sync", "startTime": "2023-11-15 01:28:18", "bytesSynced": 18450108782, "rowsSynced": 137868307, "TimeDelta": 10757, "Throughput": 12816.61, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTUwMTIwNDQ="}
 {"jobId": 206, "jobType": "sync", "startTime": "2023-11-15 04:37:21", "bytesSynced": 22069918734, "rowsSynced": 164799961, "TimeDelta": 13725, "Throughput": 12007.28, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTUwNDI4MjU="}
+{"jobId": 212, "jobType": "sync", "startTime": "2023-11-15 13:07:18", "bytesSynced": 10762942309.0, "rowsSynced": 80454451.0, "TimeDelta": 4877, "Throughput": 16496.71, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTUxMzA0MDk="}
