@@ -16,3 +16,5 @@
 {"jobId": 198, "jobType": "reset", "startTime": "2023-11-14 21:02:55", "bytesSynced": 0, "rowsSynced": 0, "TimeDelta": 10, "Throughput": 0.0, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTQyMDU4Mzk="}
 {"jobId": 200, "jobType": "sync", "startTime": "2023-11-14 21:08:28", "bytesSynced": 12902353940, "rowsSynced": 96339520, "TimeDelta": 6388, "Throughput": 15081.33, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTQyMTAzMTY="}
 {"jobId": 202, "jobType": "sync", "startTime": "2023-11-14 23:01:59", "bytesSynced": 15463272610, "rowsSynced": 115547160, "TimeDelta": 8289, "Throughput": 13939.82, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTQyMjU1MzA="}
+{"jobId": 204, "jobType": "sync", "startTime": "2023-11-15 01:28:18", "bytesSynced": 18450108782, "rowsSynced": 137868307, "TimeDelta": 10757, "Throughput": 12816.61, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTUwMTIwNDQ="}
+{"jobId": 206, "jobType": "sync", "startTime": "2023-11-15 04:37:21", "bytesSynced": 22069918734, "rowsSynced": 164799961, "TimeDelta": 13725, "Throughput": 12007.28, "operation": "sync_airbyte", "benchmark_id": "MjAyMzExMTUwNDI4MjU="}
