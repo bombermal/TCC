@@ -16,4 +16,3 @@
 {"benchmark_id": "MjAyMzExMDgxNDA3NDg=", "startTime": "2023-11-08T14:11:38.503190+00:00", "endTime": "2023-11-08T14:26:16.997682+00:00", "TimeDelta": 878.49, "operation": "sync_airflow"}
 {"benchmark_id": "MjAyMzExMDgxNDI2MjU=", "startTime": "2023-11-08T14:31:27.728129+00:00", "endTime": "2023-11-08T14:49:09.087425+00:00", "TimeDelta": 1061.36, "operation": "sync_airflow"}
 {"benchmark_id": "MjAyMzExMDgxNDQ5MjI=", "startTime": "2023-11-08T14:55:32.835052+00:00", "endTime": "2023-11-08T15:16:54.957120+00:00", "TimeDelta": 1282.12, "operation": "sync_airflow"}
-{"benchmark_id": "MjAyMzExMDgxNTE3MTQ=", "startTime": "2023-11-08T15:23:54.852288+00:00", "endTime": "2023-11-08T15:49:41.044141+00:00", "TimeDelta": 1546.19, "operation": "sync_airflow"}
