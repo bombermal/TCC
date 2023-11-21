@@ -5,8 +5,8 @@ wget https://github.com/prometheus-community/postgres_exporter/releases/download
 
 tar xvf <file>
 cd <dir>
-
 ./<file>
+##########Exporter#############
 
 [program:postgres_exporter]
 command=/opt/Exporter/postgres_exporter-0.14.0.linux-amd64/postgres_exporter --collector.postmaster
@@ -22,6 +22,7 @@ autostart=True
 autorestart=True
 numprocs=1
 
+########Stress##########
 docker stress = progrium/stress --cpu 2 --io 1 --vm 2 --vm-bytes 1024M --timeout 5m
 
  -?, --help         show this help statement
@@ -43,5 +44,10 @@ docker stress = progrium/stress --cpu 2 --io 1 --vm 2 --vm-bytes 1024M --timeout
      --hdd-noclean  do not unlink files created by hdd workers
 
 
-
+#################InfluxDB#####################
 influx token TRE = QbZ52qctpQG8T9T8bYG1QLm2ANHS_sH6Enh70jH4sxnOvcitL6YGiUnRLO-0ayy2g-cxuiCyWmkxPzmSmG10cg==
+
+################Airbyte#######################
+git clone --depth=1 https://github.com/airbytehq/airbyte.git
+
+###############Aitflow#######################

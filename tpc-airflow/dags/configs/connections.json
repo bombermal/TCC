@@ -1,0 +1,22 @@
+{
+    "SOURCE": {
+      "conn_type": "postgres",
+      "description": "",
+      "login": "postgres",
+      "password": "postgres",
+      "host": "192.168.1.30",
+      "port": 5432,
+      "schema": "tpc",
+      "extra": ""
+    },
+    "TARGET": {
+      "conn_type": "postgres",
+      "description": "",
+      "login": "postgres",
+      "password": "postgres",
+      "host": "192.168.1.31",
+      "port": 5432,
+      "schema": "tpc",
+      "extra": ""
+    }
+  }

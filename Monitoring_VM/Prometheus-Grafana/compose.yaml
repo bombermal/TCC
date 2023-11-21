@@ -1,61 +1,104 @@
+# FILEPATH: /opt/bi/TCC/Monitoring_VM/Prometheus-Grafana/compose.yaml
+
+# Define the version of Docker Compose to use
 version: '3'
 
+# Define the services that will be run
 services:
+  # Define the Prometheus service
   prometheus:
+    # Use the latest Prometheus image
     image: prom/prometheus:latest
+    # Set the container name to "prometheus"
     container_name: prometheus
+    # Map port 9090 on the host to port 9090 in the container
     ports:
       - "9090:9090"
+    # Mount the Prometheus configuration file and data volume
     volumes:
       - ./config/prometheus_${ENV}.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
+    # Connect the service to the monitoring network
     networks:
       - monitoring-net
+    # Restart the container unless stopped
     restart: unless-stopped
 
+  # Define the InfluxDB service
   influxdb2:
+    # Use the latest InfluxDB image
     image: influxdb:latest
+    # Set the container name to "influxdb2"
     container_name: influxdb2
+    # Depend on the Prometheus service
+    depends_on:
+      - prometheus
+    # Map port 8086 on the host to port 8086 in the container
     ports:
       - "8086:8086"
+    # Mount the InfluxDB configuration file and data volume
     volumes:
       - ./config/influx_config.yml:/etc/influxdb2/config.yml
       - influx-data:/var/lib/influxdb2
+    # Connect the service to the monitoring network
     networks:
       - monitoring-net
+    # Restart the container unless stopped
     restart: unless-stopped
 
+  # Define the Telegraf service
   telegraf:
+    # Use the latest Telegraf image
     image: telegraf:latest
+    # Set the container name to "telegraf"
     container_name: telegraf
+    # Depend on the Prometheus and InfluxDB services
     depends_on:
+      - prometheus
       - influxdb2
+    # Mount the Telegraf configuration file
     volumes:
       - ./config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    # Connect the service to the monitoring network
     networks:
       - monitoring-net
+    # Restart the container unless stopped
     restart: unless-stopped
 
+  # Define the Grafana service
   grafana:
+    # Use the latest Grafana image
     image: grafana/grafana
+    # Set the container name to "grafana"
     container_name: grafana
+    # Depend on the Prometheus service
+    depends_on:
+      - prometheus
+    # Map port 3000 on the host to port 3000 in the container
     ports:
       - "3000:3000"
+    # Mount the Grafana data volume
     volumes:
       - grafana-data:/var/lib/grafana
+    # Connect the service to the monitoring network
     networks:
       - monitoring-net
+    # Restart the container unless stopped
     restart: unless-stopped
 
+# Define the volumes that will be used
 volumes:
+  # Define the Grafana data volume
   grafana-data:
     driver: local
+  # Define the Prometheus data volume
   prometheus-data:
     driver: local
+  # Define the InfluxDB data volume
   influx-data:
     driver: local
 
+# Define the network that the services will be connected to
 networks:
   monitoring-net:
     name: monitoring-net
-        
