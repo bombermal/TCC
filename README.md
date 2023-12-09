@@ -1,1 +1,9 @@
-# TCC
+# Avaliação de Métricas relacionadas ao desenvolvimento de projetos de Business Inteligence
+
+Autor: Ivan A. C. N. Lima
+
+## Resumo
+O acompanhamento de novos membros de uma equipe é sempre um desafio para os gestores devido ao tempo de integração desses membros. Algo muito comum em uma empresa com intensa rotatividade de desenvolvedores na área de dados, o que comumente atinge o andamento dos projetos existentes. Diante desse fato, este artigo propõe uma solução para tal problema através de uma ferramenta \textit{open-source} (Airbyte), que permite que equipes menos técnicas construam pipelines de dados de forma rápida e intuitiva por meio de uma interface amigável, simplificando o processo de \textit{ETL} (Extrair, Transformar, Carregar). Para avaliar o uso desta ferramenta, propõe-se dois cenários, sendo: um com a ferramenta proposta e o outro com o Apache Airflow e Spark, duas ferramentas frequentemente utilizadas no mercado. Será feita uma análise comparativa entre esses cenários através de métricas adaptadas do processo ágil \textit{Scrum}. De posse dos resultados obtidos, espera-se minimizar os impactos da integração de novos membros e a otimizar o progresso dos projetos.
+
+## Abstract
+Monitoring new team members is always a challenge for managers due to the time it takes to integrate these members. Something very common in a company with intense turnover of developers in the data area, which commonly affects the progress of existing projects. Given this fact, this article proposes a solution to this problem through an open source tool (Airbyte), which allows less technical teams to build data pipelines quickly and intuitively through a friendly interface, simplifying the ETL process ( Extract, Transform, Load). To evaluate the use of this tool, two scenarios are proposed, one with the proposed tool and the other with Apache Airflow and Spark, two tools frequently used in the market. A comparative analysis will be made between these scenarios using metrics adapted from the Scrum process. With the results obtained, it is expected to minimize the impacts of integrating new members and optimize the progress of projects.
